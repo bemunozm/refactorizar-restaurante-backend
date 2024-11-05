@@ -1,4 +1,4 @@
-import { Schema } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 import { UserDocument } from "../interfaces/UserInterface";
 
 export const UserSchema = new Schema<UserDocument>({
@@ -9,3 +9,6 @@ export const UserSchema = new Schema<UserDocument>({
   confirmed: { type: Boolean, default: false },
   roles: [{ type: Schema.Types.ObjectId, ref: "Role", required: true }],
 }, { timestamps: true });
+
+const UserModel = mongoose.models.User || mongoose.model<UserDocument>("User", UserSchema);
+export default UserModel;

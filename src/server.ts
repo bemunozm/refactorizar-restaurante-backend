@@ -47,6 +47,7 @@ class App {
       console.log(colors.cyan.bold(`El servidor está en funcionamiento en http://localhost:${this.port}`));
     });
   }
+  
 }
 
 export default App;

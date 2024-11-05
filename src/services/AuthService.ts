@@ -1,48 +1,45 @@
-import { UserRepository } from "../repositories/UserRepository";
-import { RoleRepository } from "../repositories/RoleRepository";
-import { TokenRepository } from "../repositories/TokenRepository";
-import { hashPassword, checkPassword } from "../utils/auth";
 import { generateToken } from "../utils/token";
 import { generateJWT } from "../utils/jwt";
 import { AuthEmail } from "../emails/AuthEmail";
-import { UserInterface } from "../interfaces/UserInterface";
+import { User } from "../models/User";
+import { Token } from "../models/Token";
+import { Role } from "../models/Role";
 
 export class AuthService {
-    private userRepository: UserRepository;
-    private roleRepository: RoleRepository;
-    private tokenRepository: TokenRepository;
-
-    constructor() {
-        this.userRepository = new UserRepository();
-        this.roleRepository = new RoleRepository();
-        this.tokenRepository = new TokenRepository();
-    }
 
     public async createAccount(data: any): Promise<{ token: string; sessionId?: string }> {
-        const { password, email, guestId, sessionId, tableId } = data;
+        const { name, lastname, password, email, guestId, sessionId, tableId } = data;
+
+        //Instanciar el usuario
+        const user = new User({name: name, lastname: lastname, email: email, password: password, confirmed: false, roles: []})
 
         // Verificar si el usuario ya existe
-        const userExists = await this.userRepository.findOne({ email });
+        const userExists = await user.doesThatExist();
         if (userExists) throw new Error("El Usuario ya está registrado");
 
         // Asignar el rol por defecto para los clientes
-        const defaultRole = await this.roleRepository.findOne({ name: "Usuario" });
+        const role = new Role({name: 'Usuario'})
+        const defaultRole = await role.findByName();
         if (!defaultRole) throw new Error("Rol por defecto no encontrado");
 
-        // Crear el usuario con el rol predeterminado
-        const hashedPassword = await hashPassword(password);
-        const userData: Partial<UserInterface> = { ...data, roles: [defaultRole._id], password: hashedPassword };
-        const user = await this.userRepository.create(userData);
+        //Encriptar contraseña
+        await user.hashPassword()
+
+        // Asignar el rol por defecto
+        user.roles = [role];
+        
+        //Guardar el usuario
+        await user.save()
 
         // Generar token de confirmación de cuenta y guardar
-        const token = generateToken();
-        await this.tokenRepository.create({ token, user: user._id.toString() });
+        const token = new Token({ token: generateToken(), user: user.userId });
+        await token.save();
 
         // Enviar el email de confirmación
         await AuthEmail.sendConfirmationEmail({
             email: user.email,
             name: user.name,
-            token,
+            token: token.token,
         });
 
         // Manejar sesiones para invitados (enlace con pedidos, etc.)
@@ -53,7 +50,7 @@ export class AuthService {
 
         // Generar JWT para el usuario
         const jwtToken = generateJWT({
-            id: user._id.toString(),
+            id: user.userId,
             sessionId: sessionId || "",
             tableId: tableId || "",
             role: "Usuario",
@@ -63,28 +60,32 @@ export class AuthService {
     }
 
     public async login(email: string, password: string): Promise<string> {
-        const user = await this.userRepository.findOne({ email });
-        if (!user) throw new Error("Usuario no encontrado");
+        const user = new User({email: email, password: password, name: '', lastname: '', confirmed: false, roles: []})
+
+        // Buscar usuario por email
+        const userExists = await user.doesThatExist();
+        if (!userExists) throw new Error("Usuario no encontrado");
+
+        // Verificar password
+        const isPasswordCorrect = await user.checkPassword(password);
+        if (!isPasswordCorrect) throw new Error("Password Incorrecto");
 
         // Verificar si la cuenta está confirmada
         if (!user.confirmed) {
-            const token = generateToken();
-            await this.tokenRepository.create({ token, user: user._id.toString() });
+            // Generar token de confirmación de cuenta y guardar
+            const token = new Token({ token: generateToken(), user: user.userId });
+            await token.save();
             await AuthEmail.sendConfirmationEmail({
                 email: user.email,
                 name: user.name,
-                token,
+                token: token.token,
             });
             throw new Error("La cuenta no ha sido confirmada. Revisa tu correo.");
         }
 
-        // Verificar password
-        const isPasswordCorrect = await checkPassword(password, user.password);
-        if (!isPasswordCorrect) throw new Error("Password Incorrecto");
-
         // Generar JWT y devolverlo
         const jwtToken = generateJWT({
-            id: user._id.toString(),
+            id: user.userId,
             role: "Usuario",
         });
 

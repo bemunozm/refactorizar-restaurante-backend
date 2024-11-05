@@ -1,4 +1,5 @@
 export interface BaseRepository<T> {
+    findAll(): Promise<T[]>;
     findOne(query: Partial<T>): Promise<T | null>;
     findById(id: string): Promise<T | null>;
     create(data: Partial<T>): Promise<T>;

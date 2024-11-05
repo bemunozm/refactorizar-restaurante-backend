@@ -1,22 +1,32 @@
-import mongoose, { Model } from "mongoose";
-import { RoleDocument, RoleInterface } from "../interfaces/RoleInterface";
-import { RoleSchema } from "../schemas/RoleSchema";
+import {  RoleInterface } from "../interfaces/RoleInterface";
+import { RoleRepository } from "../repositories/RoleRepository";
 
 export class Role implements RoleInterface {
-  public name: string;
-  public permissions: RoleInterface["permissions"];
-  private static mongooseModel: Model<RoleDocument>;
+  public roleId: string;
+  public name?: string;
+  public permissions?: RoleInterface["permissions"];
+  private roleRepository: RoleRepository;
 
   constructor(data: RoleInterface) {
-    this.name = data.name;
-    this.permissions = data.permissions;
+    this.roleId = data.roleId;
+    this.name = data.name || '';
+    this.permissions = data.permissions || [];
+    this.roleRepository = new RoleRepository();
   }
 
   // Métodos específicos para rol podrían añadirse aquí
-  public static getModel(): Model<RoleDocument> {
-    if (!this.mongooseModel) {
-      this.mongooseModel = mongoose.model<RoleDocument>("Role", RoleSchema);
+  public async findByName() {
+    const roleData = await this.roleRepository.findOne({name: this.name});
+    
+    if (roleData) {
+      // Cargar los datos directamente en la instancia actual usando el objeto plano
+      this.roleId = roleData.id;
+      this.name = roleData.name;
+      this.permissions = roleData.permissions;
+      return true;
     }
-    return this.mongooseModel;
+
+    return false;
   }
+
 }

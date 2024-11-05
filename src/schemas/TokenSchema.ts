@@ -1,4 +1,4 @@
-import { Schema } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 import { TokenDocument } from "../interfaces/TokenInterface";
 
 export const TokenSchema = new Schema<TokenDocument>({
@@ -6,3 +6,6 @@ export const TokenSchema = new Schema<TokenDocument>({
     user: { type: String, required: false },
     session: { type: String, required: false },
 }, { timestamps: true });
+
+const TokenModel = mongoose.models.Token || mongoose.model<TokenDocument>("Token", TokenSchema);
+export default TokenModel;
