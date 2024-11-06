@@ -5,6 +5,10 @@ import morgan from "morgan";
 import dotenv from "dotenv";
 import Database from "./config/db"; // Importa la clase Database
 import authRoutes from "./routes/authRoutes"; // Importa las rutas de autenticación (agrega otras según necesites)
+import { User } from "./models/User";
+import { UserRepository } from "./repositories/UserRepository";
+import { UserService } from "./services/UserService";
+import { AuthService } from "./services/AuthService";
 
 dotenv.config(); // Configuración de variables de entorno
 
@@ -16,6 +20,7 @@ class App {
     this.app = express();
     this.port = parseInt(process.env.PORT || "4000", 10); // Puerto por defecto 4000
     this.init();
+    //this.unitaryTest(); // Ejecuta las pruebas unitarias
   }
 
   private init() {
@@ -46,6 +51,12 @@ class App {
     this.app.listen(this.port, () => {
       console.log(colors.cyan.bold(`El servidor está en funcionamiento en http://localhost:${this.port}`));
     });
+  }
+
+  public async unitaryTest() {
+    // Aquí puedes agregar tus pruebas unitarias
+    const user = new AuthService();
+    console.log(await user.confirmAccount('379504'))
   }
   
 }

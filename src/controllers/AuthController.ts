@@ -3,6 +3,7 @@ import { AuthService } from "../services/AuthService";
 import { UserService } from "../services/UserService";
 
 export class AuthController {
+    //Atributos
     private readonly authService: AuthService;
     private readonly userService: UserService;
 
@@ -10,6 +11,8 @@ export class AuthController {
         this.authService = new AuthService();
         this.userService = new UserService();
     }
+
+    //Metodos
 
     public async createAccount(req: Request, res: Response): Promise<Response> {
         try {
@@ -19,6 +22,7 @@ export class AuthController {
             return res.status(500).json({ error: error.message });
         }
     }
+    
 
     public async login(req: Request, res: Response): Promise<Response> {
         try {
@@ -50,16 +54,38 @@ export class AuthController {
         }
     }
 
-    // public async updateUserById(req: Request, res: Response): Promise<Response> {
-    //     try {
-    //         const { id } = req.params;
-    //         const updatedUser = await this.userService.updateUser(id, req.body);
-    //         if (!updatedUser) return res.status(404).json({ error: "Usuario no encontrado" });
-    //         return res.json({ message: "Usuario actualizado correctamente", updatedUser });
-    //     } catch (error) {
-    //         return res.status(500).json({ error: "Hubo un error" });
-    //     }
-    // }
+    public async updateUserById(req: Request, res: Response): Promise<Response> {
+        try {
+            const { id } = req.params;
+            const updatedUser = await this.userService.updateUserById(id, req.body);
+            if (!updatedUser) return res.status(404).json({ error: "Usuario no encontrado" });
+            return res.json({ message: "Usuario actualizado correctamente", updatedUser });
+        } catch (error) {
+            return res.status(500).json({ error: "Hubo un error" });
+        }
+    }
+
+    public async deleteUserById(req: Request, res: Response): Promise<Response> {
+        try {
+            const { id } = req.params;
+            await this.userService.deleteUserById(id);
+            return res.json({ message: "Usuario eliminado correctamente" });
+        } catch (error) {
+            return res.status(500).json({ error: "Hubo un error" });
+        }
+    }
+
+    public async createAccountByAdmin(req: Request, res: Response): Promise<Response> {
+
+        try {
+            await this.authService.createAccountByAdmin(req.body);
+            return res.status(201).json({ message: "Usuario creado correctamente" });
+        } catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
+    }
+
+    
 
     // Otros métodos del controlador como `confirmAccount`, `requestConfirmationCode`, `forgotPassword`, `validateToken`, etc.
 }

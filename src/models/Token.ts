@@ -19,6 +19,24 @@ export class Token implements TokenInterface {
   }
 
   // Métodos específicos para usuario podrían añadirse aquí
+  public async findByToken() {
+    const tokenData = await this.tokenRepository.findOne({token: this.token});
+    
+    if (tokenData) {
+      // Cargar los datos directamente en la instancia actual usando el objeto plano
+      this.tokenId = tokenData.id;
+      this.user = tokenData.user;
+      this.session = tokenData.session;
+      return this;
+    }
+
+    return false;
+  }
+
+  public async deleteToken() {
+    await this.tokenRepository.delete(this.tokenId);
+  }
+
   public async save(): Promise<void> {
     const savedToken = await this.tokenRepository.save(this);
     this.tokenId = savedToken.id; // Actualiza el userId con el ID generado por Mongoose

@@ -1,5 +1,6 @@
 import { Document } from "mongoose";
 import { RoleInterface } from "./RoleInterface";
+import { Role } from "../models/Role";
 
 export interface UserInterface {
   userId?: string;

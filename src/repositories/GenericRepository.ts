@@ -8,27 +8,42 @@ export class GenericRepository<T extends Document> implements BaseRepository<T> 
     this.model = model;
   }
 
-  public async findAll(): Promise<T[]> {
+  // Obtener todos los documentos con opción de popular
+  public async findAll(populate?: string | string[]): Promise<T[]> {
     try {
-      return await this.model.find().exec();
+      const query = this.model.find();
+      if (populate) {
+        query.populate(populate); // Aplica `populate` si se especifica
+      }
+      return await query.exec();
     } catch (error) {
       console.error(`Error al buscar todos: ${error}`);
       throw new Error("Error al buscar todos los documentos");
     }
   }
 
-  public async findOne(query: FilterQuery<T>): Promise<T | null> {
+  // Obtener un solo documento con opción de popular
+  public async findOne(query: FilterQuery<T>, populate?: string | string[]): Promise<T | null> {
     try {
-      return await this.model.findOne(query).exec();
+      const dbQuery = this.model.findOne(query);
+      if (populate) {
+        dbQuery.populate(populate);
+      }
+      return await dbQuery.exec();
     } catch (error) {
       console.error(`Error al buscar: ${error}`);
       throw new Error("Error al buscar el documento");
     }
   }
 
-  public async findById(id: string): Promise<T | null> {
+  // Obtener un documento por ID con opción de popular
+  public async findById(id: string, populate?: string | string[]): Promise<T | null> {
     try {
-      return await this.model.findById(id).exec();
+      const query = this.model.findById(id);
+      if (populate) {
+        query.populate(populate);
+      }
+      return await query.exec();
     } catch (error) {
       console.error(`Error al buscar por ID: ${error}`);
       throw new Error("Error al buscar el documento por ID");
@@ -60,7 +75,7 @@ export class GenericRepository<T extends Document> implements BaseRepository<T> 
       return result !== null;
     } catch (error) {
       console.error(`Error al borrar: ${error}`);
-      throw new Error("Error Borrando el documento");
+      throw new Error("Error borrando el documento");
     }
   }
 }

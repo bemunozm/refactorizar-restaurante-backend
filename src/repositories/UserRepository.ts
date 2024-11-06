@@ -13,7 +13,7 @@ export class UserRepository extends GenericRepository<UserDocument> {
   // Métodos específicos de UserRepository pueden añadirse aquí
   public async findByEmail(email: string): Promise<Partial<UserDocument> | null> {
     try {
-      const userModel = await this.model.findOne({ email }).exec();
+      const userModel = await this.model.findOne({ email }).populate("roles").exec();
       if (userModel){
         return {
           userId: userModel.id,
@@ -35,17 +35,21 @@ export class UserRepository extends GenericRepository<UserDocument> {
 
   // Método para guardar una instancia de User en la base de datos
   public async save(user: User): Promise<UserDocument> {
+    try {
+      const assignedRoleIds = user.roles.map(role => role.roleId);
 
-    const assignedRoleIds = user.roles.map(role => role.roleId);
-
-    const userDocument = new this.model({
-      name: user.name,
-      lastname: user.lastname,
-      email: user.email,
-      password: user.password,
-      confirmed: user.confirmed,
-      roles: assignedRoleIds,
-    });
-    return await userDocument.save();
+      const userDocument = new this.model({
+        name: user.name,
+        lastname: user.lastname,
+        email: user.email,
+        password: user.password,
+        confirmed: user.confirmed,
+        roles: assignedRoleIds,
+      });
+      return await userDocument.save();
+    } catch (error) {
+      console.error(`Error al guardar el usuario: ${error}`);
+      throw new Error("Error al guardar el documento del usuario");
+    }
   }
 }

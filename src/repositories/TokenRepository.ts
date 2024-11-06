@@ -22,12 +22,17 @@ export class TokenRepository extends GenericRepository<TokenDocument> {
 
   // Método para guardar una instancia de Token en la base de datos
   public async save(token: Token): Promise<TokenDocument> {
-    const tokenDocument = new this.model({
-      token: token.token,
-      user: token.user,
-      session: token.session,
-    });
-    return await tokenDocument.save();
+    try {
+      const tokenDocument = new this.model({
+        token: token.token,
+        user: token.user,
+        session: token.session,
+      });
+      return await tokenDocument.save();
+    } catch (error) {
+      console.error(`Error al guardar el token: ${error}`);
+      throw new Error("Error al guardar el documento del token");
+    }
   }
 
 }

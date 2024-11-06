@@ -1,9 +1,10 @@
 import { Document, Types } from "mongoose";
+import { UserInterface } from "./UserInterface";
 
 
 export interface GuestInterface {
   name: string;
-  user?: Types.ObjectId | string;
+  user?: UserInterface;
   orders: null;
 }
 

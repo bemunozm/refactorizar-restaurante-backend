@@ -29,4 +29,18 @@ export class Role implements RoleInterface {
     return false;
   }
 
+  public async findById() {
+    const roleData = await this.roleRepository.findById(this.roleId);
+    
+    if (roleData) {
+      // Cargar los datos directamente en la instancia actual usando el objeto plano
+      this.roleId = roleData.id;
+      this.name = roleData.name;
+      this.permissions = roleData.permissions;
+      return true;
+    }
+
+    return false;
+  }
+
 }
