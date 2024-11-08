@@ -13,7 +13,7 @@ export class TokenRepository extends GenericRepository<TokenDocument> {
   // Métodos específicos de UserRepository pueden añadirse aquí
   public async findByUserId(userId: string): Promise<TokenDocument | null> {
     try {
-      return await this.model.findOne({ userId }).exec();
+      return await this.model.findOne({ user: userId }).exec();
     } catch (error) {
         console.error(`Error al buscar por userId: ${error}`);
         throw new Error("Error al buscar el documento por userId");

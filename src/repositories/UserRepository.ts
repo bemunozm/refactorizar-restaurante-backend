@@ -33,6 +33,30 @@ export class UserRepository extends GenericRepository<UserDocument> {
         }
   }
 
+  public async getAllUsers (populate?: string | string[]) {
+    try {
+      const userModel = await super.findAll(populate);
+      if (userModel){
+        return userModel.map(user => {
+          return {
+            userId: user.id,
+            name: user.name,
+            lastname: user.lastname,
+            email: user.email,
+            password: user.password,
+            confirmed: user.confirmed,
+            roles: user.roles
+          }
+        })	
+      } else {
+        return null
+      }
+    } catch (error) {
+        console.error(`Error al buscar por email: ${error}`);
+        throw new Error("Error al buscar el documento por email");
+        }
+  }
+
   // Método para guardar una instancia de User en la base de datos
   public async save(user: User): Promise<UserDocument> {
     try {

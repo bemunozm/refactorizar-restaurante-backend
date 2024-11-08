@@ -1,13 +1,14 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { UserRepository } from "../repositories/UserRepository";
-import { UserDocument } from "../interfaces/UserInterface";
-// import Session, { GuestType } from "../models/Session"; // Comentado para implementación futura
+import { UserInterface } from "../interfaces/UserInterface";
+import { Session } from "../models/Session";
+import { User } from "../models/User";
 
 declare global {
     namespace Express {
         interface Request {
-            user?: UserDocument; // Usuario registrado
+            user?: UserInterface; // Usuario registrado
             guest?: any; // Invitado (de tipo `GuestType`, que se definirá luego)
             sessionId?: string; // ID de la sesión
             tableId?: string; // ID de la mesa
@@ -17,67 +18,57 @@ declare global {
 }
 
 class AuthMiddleware {
-    private static userRepository = new UserRepository();
 
-    public static async authenticate(req: Request, res: Response, next: NextFunction) {
+    public static async authenticate(req: Request, res: Response, next: NextFunction): Promise<void> {
         const bearer = req.headers.authorization;
 
         if (!bearer) {
-            return res.status(401).json({ error: "No Autorizado" });
+            res.status(401).json({ error: "No Autorizado" });
+            return;
         }
 
         const [, token] = bearer.split(" ");
 
         try {
-            // Decodifica el token
             const decoded: any = jwt.verify(token, process.env.JWT_SECRET as string);
 
-            console.log("Decoded Token:", decoded);
+            // Asigna sessionId y tableId desde el token decodificado, si existen
+            req.sessionId = decoded.sessionId || undefined;
+            req.tableId = decoded.tableId || undefined;
 
-            // Asigna el sessionId y tableId si existen en el token decodificado
-            if (decoded.sessionId) {
-                req.sessionId = decoded.sessionId;
-            }
-
-            if (decoded.tableId) {
-                req.tableId = decoded.tableId;
-            }
-
-            // Verifica el rol en el token para identificar si es un invitado o usuario
             if (decoded.role === "Usuario") {
                 // Usuario registrado
-                const user = await AuthMiddleware.userRepository.findById(decoded.id);
+                const user = new User({ userId: decoded.id });
+                await user.findById();
                 if (user) {
-                    req.user = user; // Asigna el usuario al request
+                    req.user = user;
                     req.role = "Usuario";
                     next();
                 } else {
-                    return res.status(401).json({ error: "Usuario No Encontrado" });
+                    res.status(401).json({ error: "Usuario No Encontrado" });
                 }
-            } 
-            // else if (decoded.role === "Invitado") {
-            //     // Invitado (implementación futura)
-            //     const session = await Session.findOne({ $or: [{ "guests._id": decoded.id }, { "guests.user": decoded.id }] });
+            } else if (decoded.role === "Invitado") {
+                const session = new Session({ sessionId: decoded.sessionId });
+                await session.findById();
 
-            //     if (!session) {
-            //         return res.status(500).json({ error: "Este invitado no pertenece a ninguna sesión activa" });
-            //     }
+                if (!session) {
+                    res.status(500).json({ error: "Este invitado no pertenece a ninguna sesión activa" });
+                    return;
+                }
 
-            //     // Encuentra el invitado en la sesión
-            //     const guest = session.guests.find((guest: any) => guest._id.toString() === decoded.id);
-            //     if (guest) {
-            //         req.guest = guest; // Asigna el invitado al request
-            //         req.role = "Invitado";
-            //         next();
-            //     } else {
-            //         return res.status(500).json({ error: "Invitado No Encontrado" });
-            //     }
-            // } 
-            else {
-                return res.status(401).json({ error: "Rol no autorizado" });
+                const guest = session.guests.find((guest: any) => guest._id.toString() === decoded.id);
+                if (guest) {
+                    req.guest = guest;
+                    req.role = "Invitado";
+                    next();
+                } else {
+                    res.status(500).json({ error: "Invitado No Encontrado" });
+                }
+            } else {
+                res.status(401).json({ error: "Rol no autorizado" });
             }
         } catch (error) {
-            return res.status(401).json({ error: "Token No Válido" });
+            res.status(401).json({ error: "Token No Válido" });
         }
     }
 }

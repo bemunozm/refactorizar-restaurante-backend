@@ -1,8 +1,6 @@
-import mongoose, { Model } from "mongoose";
-import { TokenDocument, TokenInterface } from "../interfaces/TokenInterface";
-import { TokenSchema } from "../schemas/TokenSchema";
+
+import { TokenInterface } from "../interfaces/TokenInterface";
 import { TokenRepository } from "../repositories/TokenRepository";
-import { generateToken } from "../utils/token";
 
 export class Token implements TokenInterface {
     public tokenId?: string;
@@ -33,12 +31,41 @@ export class Token implements TokenInterface {
     return false;
   }
 
+  public async findByUserId() {
+    const tokenData = await this.tokenRepository.findByUserId(this.user);
+    
+    if (tokenData) {
+      // Cargar los datos directamente en la instancia actual usando el objeto plano
+      this.tokenId = tokenData.id;
+      this.token = tokenData.token;
+      this.session = tokenData.session;
+      return this;
+    }
+
+    return false;
+  }
+
+  public async findBySessionId() {
+    const tokenData = await this.tokenRepository.findOne({session: this.session});
+    
+    if (tokenData) {
+      // Cargar los datos directamente en la instancia actual usando el objeto plano
+      this.tokenId = tokenData.id;
+      this.token = tokenData.token;
+      this.user = tokenData.user;
+      return this;
+    }
+
+    return false;
+  }
+
   public async deleteToken() {
     await this.tokenRepository.delete(this.tokenId);
   }
 
-  public async save(): Promise<void> {
+  public async save() {
     const savedToken = await this.tokenRepository.save(this);
     this.tokenId = savedToken.id; // Actualiza el userId con el ID generado por Mongoose
+    return this;
   }
 }

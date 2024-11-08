@@ -1,9 +1,8 @@
-import mongoose, { Document, Model } from "mongoose";
-import { UserDocument, UserInterface } from "../interfaces/UserInterface";
-import { UserSchema } from "../schemas/UserSchema";
+
+import { UserInterface } from "../interfaces/UserInterface";
 import { checkPassword, hashPassword } from "../utils/auth";
 import { UserRepository } from "../repositories/UserRepository";
-import { RoleDocument } from "../interfaces/RoleInterface";
+import { RoleInterface } from "../interfaces/RoleInterface";
 import { Role } from "./Role";
 
 export class User implements UserInterface {
@@ -13,10 +12,10 @@ export class User implements UserInterface {
   public email: string;
   public password: string;
   public confirmed: boolean;
-  public roles: UserInterface['roles'];
+  public roles: Role[];
   private userRepository: UserRepository;
 
-  constructor(data: UserInterface) {
+  constructor(data: Partial<UserInterface>) {
     this.userId = data.userId || '';
     this.name = data.name || '';
     this.lastname = data.lastname || '';
@@ -32,9 +31,9 @@ export class User implements UserInterface {
     const userData = await this.userRepository.findByEmail(this.email);
     
     if (userData) {
-      const roles = userData.roles.map((role : RoleDocument) => { return {roleId: role.id.toString(), name: role.name, permissions: role.permissions}});
+      const roles = userData.roles.map((role : RoleInterface) => { return new Role({roleId: role.roleId, name: role.name, permissions: role.permissions}) });
 
-      this.userId = userData.id;
+      this.userId = userData.userId;
       this.name = userData.name;
       this.lastname = userData.lastname;
       this.email = userData.email;
@@ -61,10 +60,9 @@ export class User implements UserInterface {
   //Buscar por ID
   public async findById(){
     const userData = await this.userRepository.findById(this.userId, 'roles');
-    
     if (userData) {
-      const roles = userData.roles.map((role : RoleDocument) => { return { roleId: role._id.toString(), name: role.name, permissions: role.permissions} });
-
+      const roles = userData.roles.map((role : any) => { return new Role({roleId: role.id, name: role.name, permissions: role.permissions}) });
+      
       this.userId = userData.id;
       this.name = userData.name;
       this.lastname = userData.lastname;
@@ -82,7 +80,7 @@ export class User implements UserInterface {
   public async update(data: Partial<UserInterface>){
     const updatedUser = await this.userRepository.update(this.userId, data);
     if (updatedUser) {
-      const roles = updatedUser.roles.map((role : RoleDocument) => { return { roleId: role._id.toString(), name: role.name, permissions: role.permissions} });
+      const roles = updatedUser.roles.map((role : RoleInterface) => { return new Role({roleId: role.roleId, name: role.name, permissions: role.permissions}) });
 
       this.userId = updatedUser.id;
       this.name = updatedUser.name;

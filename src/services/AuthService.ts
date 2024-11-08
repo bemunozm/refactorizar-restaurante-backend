@@ -5,6 +5,7 @@ import { User } from "../models/User";
 import { Token } from "../models/Token";
 import { Role } from "../models/Role";
 import { Session } from "../models/Session";
+import { Order } from "../models/Order";
 
 export class AuthService {
 
@@ -46,10 +47,21 @@ export class AuthService {
         // Manejar sesiones para invitados (enlace con pedidos, etc.)
         if (guestId) {
             // Encontrar la sesión y el invitado correspondiente
-            // const session = new Session({ sessionId: sessionId, tableId: tableId, guests: [], status: "Activa" });
+            const session = new Session({ sessionId: sessionId, tableId: tableId, guests: [], status: "Activa" });
 
             //Verificar si la session existe
-            // const sessionExists = await session.findById();
+            const sessionExists = await session.findById();
+            if (!sessionExists) throw new Error("Sesión no encontrada");
+
+            //Usuario a actualizar
+            await session.updateGuestToLogged(guestId, user.userId);
+
+            //Actualizar los pedidos del invitado para que pertenezcan al usuario
+            const order = new Order({ guestId: guestId, sessionId: sessionId, tableId: tableId, userId: user.userId, items: [], status: "Sin Pagar" });
+
+            //Actualizar los pedidos de invitado a usuario
+            await order.updateGuestToUserOrders();
+
         }
 
         // Generar JWT para el usuario
@@ -57,19 +69,21 @@ export class AuthService {
             id: user.userId,
             sessionId: sessionId || "",
             tableId: tableId || "",
-            role: "Usuario",
+            role: "Invitado",
         });
 
         return { token: jwtToken, sessionId };
     }
 
-    public async login(email: string, password: string): Promise<string> {
+    public async login(email: string, password: string, guestId?: string, sessionId?: string, tableId?: string) {
+
+        // Instanciar el usuario
         const user = new User({email: email, password: password, name: '', lastname: '', confirmed: false, roles: []})
 
         // Buscar usuario por email
         const userExists = await user.doesThatExist();
         if (!userExists) throw new Error("Usuario no encontrado");
-
+        
         // Verificar password
         const isPasswordCorrect = await user.checkPassword(password);
         if (!isPasswordCorrect) throw new Error("Password Incorrecto");
@@ -87,13 +101,50 @@ export class AuthService {
             throw new Error("La cuenta no ha sido confirmada. Revisa tu correo.");
         }
 
-        // Generar JWT y devolverlo
-        const jwtToken = generateJWT({
-            id: user.userId,
-            role: "Usuario",
-        });
+        //Verificar roles del usuario para determinar el tipo de autenticación
+        const roles = user.roles.map((role) => role.name);
 
-        return jwtToken;
+        
+        if (roles.includes('Administrador')) {
+            // Caso para "staff" (sin mesa ni sesión)
+            const token = generateJWT({
+                id: user.userId,
+                role: 'Usuario'  // Asignar el rol "staff" o los roles específicos si lo prefieres
+            });
+
+            return { token: token };  // Devuelve el JWT sin datos de sesión ni mesa
+
+        } else {
+            // Caso para "Usuario" (cliente)
+            // Transferir pedidos de invitado a usuario registrado, si aplica
+
+            if (guestId) {
+                // 1. Encontrar la sesión y el invitado correspondiente
+                const session = new Session({ sessionId: sessionId, tableId: tableId, guests: [], status: "Activa" });
+                const sessionExists = await session.findById();
+                if (!sessionExists) {
+                    throw new Error('Sesión no encontrada');
+                }
+
+                // 2. Encontrar el invitado en la sesión
+                const guestToUpdate = session.updateGuestToLogged(guestId, user.userId);
+                if (!guestToUpdate) {
+                    throw new Error('Invitado no encontrado en la sesión');
+                }
+
+                const order = new Order({ guestId: guestId, sessionId: sessionId, tableId: tableId, userId: user.userId, items: [], status: "Sin Pagar" });
+                await order.updateGuestToUserOrders();
+            }
+            // Generar el JWT para el usuario y enviar la sesión y mesa
+            const token = generateJWT({
+                id: user.userId,
+                sessionId: sessionId || '',
+                tableId: tableId || '',
+                role: 'Usuario'
+            });
+
+            return { token: token, sessionId: sessionId };  // Devuelve el JWT con la sesión y mesa
+        }
     }
 
     public async createAccountByAdmin(data: any): Promise<void> {
@@ -224,8 +275,8 @@ export class AuthService {
         await tokenInstance.deleteToken();
     }
     
-    public async checkPassword(password: string): Promise<boolean> {
-        const user = new User({ email: '', password: password, name: '', lastname: '', confirmed: false, roles: [] });
+    public async checkPassword(password: string, userId): Promise<boolean> {
+        const user = new User({ userId: userId, email: '', password: password, name: '', lastname: '', confirmed: false, roles: [] });
         return await user.checkPassword(password);
     }
 }

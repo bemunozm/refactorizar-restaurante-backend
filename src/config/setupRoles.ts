@@ -37,7 +37,12 @@ const defaultRoles = [
       "VIEW_ROLES",
       "VIEW_ROLE",
       "UPDATE_ROLE",
-      "DELETE_ROLE"
+      "DELETE_ROLE",
+      "VIEW_USER",
+      "UPDATE_USER",
+      "DELETE_USER",
+      
+      
     ],
   },
   {

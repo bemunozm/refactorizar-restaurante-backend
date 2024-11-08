@@ -9,7 +9,7 @@ export interface UserInterface {
   email: string;
   password: string;
   confirmed: boolean;
-  roles: RoleInterface[];
+  roles: Role[];
 }
 
 export interface UserDocument extends UserInterface, Document {}

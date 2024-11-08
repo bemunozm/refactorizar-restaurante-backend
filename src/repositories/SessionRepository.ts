@@ -12,10 +12,20 @@ export class SessionRepository extends GenericRepository<SessionDocument> {
 
     // Métodos específicos de SessionRepository pueden añadirse aquí
 
+    public async findActiveSessionByTableId(tableId: string): Promise<SessionDocument | null> {
+        try {
+            return await this.model.findOne({ tableId, status: 'Activa' }).exec();
+        } catch (error) {
+            console.error(`Error al buscar una sesión activa para la mesa: ${error}`);
+            throw new Error("Error al verificar la sesión activa de la mesa");
+        }
+    }
+
     public async findBySessionId(sessionId: string): Promise<SessionDocument | null> {
 
         try {
-            return await this.model.findOne({ sessionId }).populate('guests user').exec();
+            const session = await this.model.findOne({_id: sessionId}).exec()
+            return session ;
         } catch (error) {
             console.error(`Error al buscar por sessionId: ${error}`);
             throw new Error("Error al buscar el documento por sessionId");
@@ -28,6 +38,25 @@ export class SessionRepository extends GenericRepository<SessionDocument> {
         } catch (error) {
                 console.error(`Error al buscar por userId: ${error}`);
                 throw new Error("Error al buscar el documento por userId");
+        }
+    }
+
+    public async updateGuestToLogged(sessionId: string, guestId: string, userId: string) {
+        try {
+            const session = await this.model.findOne({ id: sessionId }).exec();
+            if (session) {
+                const updatedGuests = session.guests.map((guest: any) => {
+                    if (guest.id === guestId) {
+                        guest.user = userId;
+                    }
+                    return guest;
+                });
+                session.guests = updatedGuests;
+                return await session.save();
+            }
+        } catch (error) {
+            console.error(`Error al actualizar el estado de los invitados a logged: ${error}`);
+            throw new Error("Error al actualizar el estado de los invitados a logged");
         }
     }
 

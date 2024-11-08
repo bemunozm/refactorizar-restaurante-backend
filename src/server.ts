@@ -9,6 +9,14 @@ import { User } from "./models/User";
 import { UserRepository } from "./repositories/UserRepository";
 import { UserService } from "./services/UserService";
 import { AuthService } from "./services/AuthService";
+import sessionRoutes from "./routes/sessionRoutes";
+import tableRoutes from "./routes/tableRoutes";
+import productRoutes from "./routes/productRoutes";
+import categoryRoutes from "./routes/categoryRoutes";
+import orderRoutes from "./routes/orderRoutes";
+import ingredientRoutes from "./routes/ingredientRoutes";
+import path from "path";
+import roleRoutes from "./routes/roleRoutes";
 
 dotenv.config(); // Configuración de variables de entorno
 
@@ -43,6 +51,15 @@ class App {
 
   private initRoutes() {
     this.app.use("/api/auth", authRoutes); // Ejemplo de ruta; agrega otras rutas según tu aplicación
+    this.app.use("/api/session", sessionRoutes);
+    this.app.use("/api/table", tableRoutes);
+    this.app.use("/api/product", productRoutes);
+    this.app.use("/api/category", categoryRoutes);
+    this.app.use("/api/order", orderRoutes);
+    this.app.use("/api/role", roleRoutes);
+    this.app.use("/api/ingredient", ingredientRoutes);
+    // Servir las imágenes estáticas
+    this.app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
     // Otras rutas de la API pueden agregarse aquí (userRoutes, productRoutes, etc.)
   }
 

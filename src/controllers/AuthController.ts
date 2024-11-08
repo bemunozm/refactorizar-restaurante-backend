@@ -26,9 +26,10 @@ export class AuthController {
 
     public async login(req: Request, res: Response): Promise<Response> {
         try {
-            const { email, password } = req.body;
-            const token = await this.authService.login(email, password);
-            return res.json({ token });
+            const { email, password, sessionId, tableId, guestId } = req.body;
+            console.log(req.body);
+            const token = await this.authService.login(email, password, guestId, sessionId, tableId);
+            return res.json(token);
         } catch (error) {
             return res.status(401).json({ error: error.message });
         }
@@ -80,6 +81,80 @@ export class AuthController {
         try {
             await this.authService.createAccountByAdmin(req.body);
             return res.status(201).json({ message: "Usuario creado correctamente" });
+        } catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
+    }
+
+    public async confirmAccount(req: Request, res: Response): Promise<Response> {
+        try {
+            const { token } = req.params;
+            await this.authService.confirmAccount(token);
+            return res.json({ message: "Cuenta confirmada correctamente" });
+        } catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
+    }	
+
+    public async requestConfirmationCode(req: Request, res: Response): Promise<Response> {
+        try {
+            const { email } = req.body;
+            await this.authService.requestConfirmationCode(email);
+            return res.json({ message: "Código de confirmación enviado correctamente" });
+        } catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
+    }
+
+    public async forgotPassword(req: Request, res: Response): Promise<Response> {
+        try {
+            const { email } = req.body;
+            await this.authService.forgotPassword(email);
+            return res.json({ message: "Correo de recuperación enviado correctamente" });
+        } catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
+    }
+
+    public async validateToken(req: Request, res: Response): Promise<Response> {
+        try {
+            const { token } = req.params;
+            await this.authService.validateToken(token);
+            return res.json({ message: "Token validado correctamente" });
+        } catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
+    }
+
+    public async updatePasswordWithToken(req: Request, res: Response): Promise<Response> {
+        try {
+            const { token } = req.params;
+            await this.authService.updatePasswordWithToken(token, req.body.password);
+            return res.json({ message: "Contraseña actualizada correctamente" });
+        } catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
+    }
+
+    public async checkPassword(req: Request, res: Response): Promise<Response> {
+        try {
+            const { password, userId } = req.body;
+            const result = await this.authService.checkPassword(password, userId);
+            return res.json(result);
+        } catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
+    }
+
+    public async user(req: Request, res: Response): Promise<Response> {
+        try {
+            return res.json({
+                user: req.user || {},
+                guest: req.guest || {},
+                sessionId: req.sessionId || '',
+                tableId: req.tableId || '',
+                role: req.role || ''
+            })
         } catch (error) {
             return res.status(500).json({ error: error.message });
         }
