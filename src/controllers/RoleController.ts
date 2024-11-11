@@ -72,8 +72,11 @@ export class RoleController {
             const result = await this.roleService.deleteRole(id);
             return result
                 ? res.status(200).json({ message: 'Rol eliminado correctamente' })
-                : res.status(403).json({ message: 'No se puede eliminar este rol por defecto' });
-        } catch (error) {
+                : res.status(404).json({ message: 'Rol no encontrado' });
+        } catch (error: any) {
+            if (error.message === 'No se puede eliminar el rol porque tiene usuarios asociados') {
+                return res.status(400).json({ message: error.message });
+            }
             console.error(error);
             return res.status(500).json({ message: 'Error al eliminar el rol', error });
         }

@@ -17,6 +17,7 @@ import orderRoutes from "./routes/orderRoutes";
 import ingredientRoutes from "./routes/ingredientRoutes";
 import path from "path";
 import roleRoutes from "./routes/roleRoutes";
+import transbankRoutes from "./routes/transbankRoutes";
 
 dotenv.config(); // Configuración de variables de entorno
 
@@ -58,6 +59,7 @@ class App {
     this.app.use("/api/order", orderRoutes);
     this.app.use("/api/role", roleRoutes);
     this.app.use("/api/ingredient", ingredientRoutes);
+    this.app.use("/api/transbank", transbankRoutes); // Ejemplo de ruta; agrega otras rutas según tu aplicación
     // Servir las imágenes estáticas
     this.app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
     // Otras rutas de la API pueden agregarse aquí (userRoutes, productRoutes, etc.)

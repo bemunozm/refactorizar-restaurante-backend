@@ -37,6 +37,7 @@ export class Category implements CategoryInterface {
     static async getAll() {
         const categoryRepository = new CategoryRepository();
         const categoryInstances = await categoryRepository.findAll();
+        
 
         if (categoryInstances) {
             const categories = categoryInstances.map((categoryInstance) => {

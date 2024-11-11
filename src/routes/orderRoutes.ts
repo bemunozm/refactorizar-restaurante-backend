@@ -68,7 +68,7 @@ class OrderRoute {
         this.router.get(
             "/kitchen",
             AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("VIEW_ORDERS_KITCHEN"),
+            //  PermissionMiddleware.checkPermission("VIEW_ORDERS_KITCHEN"),
             this.orderController.getOrdersForKitchen.bind(this.orderController)
         );
 

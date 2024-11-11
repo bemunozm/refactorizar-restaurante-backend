@@ -5,12 +5,12 @@ import { CategoryInterface } from "./CategoryInterface";
 import { Product } from "../models/Product";
 
 export interface ProductInterface {
-    productId?: Product | string;
+    productId?: string;
     name: string;
     price: number;
     about: string;
     image?: string;
-    categoryId: Category ;
+    categoryId: Category | string;
     ingredients: IngredientInterface[];
 }
 

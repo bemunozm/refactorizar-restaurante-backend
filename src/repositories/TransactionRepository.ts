@@ -22,11 +22,11 @@ export class TransactionRepository extends GenericRepository<TransactionDocument
     }
 
     public async findByToken(token: string) {
-        return await this.model.findOne({ token }).populate('orders');
+        return await this.model.findOne({ token });
     }
 
     public async findById(id: string) {
-        return await this.model.findById(id).populate('orders');
+        return await this.model.findById(id);
     }
 
     public async updateToken(transactionId: string, token: string) {

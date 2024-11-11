@@ -1,53 +1,60 @@
 import { SessionDocument, SessionInterface } from "../interfaces/SessionInterface";
 import { GuestDocument, GuestInterface } from "../interfaces/GuestInterface";
+import { OrderDocument, OrderItemInterface } from "../interfaces/OrderInterface";
 import { SessionRepository } from "../repositories/SessionRepository";
-import { OrderDocument } from "../interfaces/OrderInterface";
+import { Product } from "./Product";
+import { Table } from "./Table";
+import { User } from "./User";
 
 export class Session implements SessionInterface {
     public sessionId?: string;
-    public tableId: string;
+    public tableId: Table;
     public guests: GuestInterface[];
     public status: 'Activa' | 'Pagando' | 'Finalizada';
     private sessionRepository: SessionRepository;
-  
+
     constructor(data: Partial<SessionInterface>) {
         this.sessionId = data.sessionId?.toString();
-        this.tableId = data.tableId?.toString() || '';
+        this.tableId = data.tableId instanceof Table ? data.tableId : new Table({ tableId: data.tableId || '' });
         this.guests = data.guests || [];
         this.status = data.status || 'Activa';
         this.sessionRepository = new SessionRepository();
     }
 
-    private populateGuests(guests: GuestDocument[]): GuestInterface[] {
-        const populatedGuest = guests.map((guest: GuestDocument) => ({
+    private async populateOrderItems(items: OrderItemInterface[]): Promise<OrderItemInterface[]> {
+        return Promise.all(items.map(async (item) => {
+            const product = typeof item.productId === 'string' ? await new Product({ productId: item.productId }).findById() : item.productId;
+            return {
+                ...item,
+                productId: product,
+            };
+        }));
+    }
+
+    private async populateGuests(guests: GuestDocument[]): Promise<GuestInterface[]> {
+        return Promise.all(guests.map(async (guest: GuestDocument) => ({
             guestId: guest.id.toString(),
             name: guest.name,
-            user: guest.user,
-            orders: guest.orders.map((order: OrderDocument) => ({
+            user: typeof guest.user === 'string' ? await new User({ userId: guest.user }).findById() : guest.user,
+            orders: await Promise.all(guest.orders.map(async (order: OrderDocument) => ({
                 orderId: order.id.toString(),
-                sessionId: order.sessionId,
-                tableId: order.tableId,
+                sessionId: typeof order.sessionId === 'string' ? await new Session({ sessionId: order.sessionId }).findById() : order.sessionId,
+                tableId: typeof order.tableId === 'string' ? await new Table({ tableId: order.tableId }).findById() : order.tableId,
                 guestId: order.guestId,
-                userId: order.userId,
-                items: order.items.map(item => ({
-                    productId: item.productId,
-                    quantity: item.quantity,
-                    status: item.status,
-                    comment: item.comment
-                })),
-                status: order.status
-            }))
-        }));
-        return populatedGuest;
+                userId: typeof order.userId === 'string' ? await new User({ userId: order.userId }).findById() : order.userId,
+                items: await this.populateOrderItems(order.items),
+                status: order.status,
+            }))),
+        })));
     }
 
     public async findActiveSessionByTableId(): Promise<Session | null> {
         try {
-            const sessionDoc = await this.sessionRepository.findActiveSessionByTableId(this.tableId);
+            const sessionDoc = await this.sessionRepository.findActiveSessionByTableId(this.tableId.tableId);
             if (sessionDoc) {
                 this.sessionId = sessionDoc.id;
-                this.tableId = sessionDoc.tableId.toString();
-                this.guests = this.populateGuests(sessionDoc.guests as GuestDocument[]);
+                this.tableId = await new Table({ tableId: sessionDoc.tableId.toString() }).findById();
+                this.guests = await this.populateGuests(sessionDoc.guests as GuestDocument[]);
                 this.status = sessionDoc.status;
                 return this;
             }
@@ -63,8 +70,8 @@ export class Session implements SessionInterface {
             const session = await this.sessionRepository.findBySessionId(this.sessionId);
             if (session) {
                 this.sessionId = session.id.toString();
-                this.tableId = session.tableId.toString();
-                this.guests = this.populateGuests(session.guests as GuestDocument[]);
+                this.tableId = await new Table({ tableId: session.tableId.toString() }).findById();
+                this.guests = await this.populateGuests(session.guests as GuestDocument[]);
                 this.status = session.status;
                 return this;
             }
@@ -88,26 +95,12 @@ export class Session implements SessionInterface {
     public async addGuest(guest: GuestInterface): Promise<GuestInterface | null> {
         try {
             this.guests.push(guest);
-            console.log(this.guests);
             const updatedSession = await this.sessionRepository.update(this.sessionId, { guests: this.guests });
-            console.log(updatedSession);
             if (updatedSession) {
                 const newGuest: GuestDocument = (updatedSession.guests as GuestDocument[])[updatedSession.guests.length - 1];
-                const populatedGuest = {
-                    guestId: newGuest.id.toString(),
-                    name: newGuest.name,
-                    orders: newGuest.orders.map((order: OrderDocument) => ({
-                        orderId: order.id.toString(),
-                        sessionId: order.sessionId,
-                        tableId: order.tableId,
-                        guestId: order.guestId,
-                        userId: order.userId,
-                        items: order.items,
-                        status: order.status
-                    }))
-                };
-                this.guests = this.populateGuests(updatedSession.guests as GuestDocument[]);
-                return populatedGuest;
+                const populatedGuest = await this.populateGuests([newGuest]);
+                this.guests = await this.populateGuests(updatedSession.guests as GuestDocument[]);
+                return populatedGuest[0];
             }
             return null;
         } catch (error) {
@@ -120,7 +113,7 @@ export class Session implements SessionInterface {
         try {
             const updatedSession = await this.sessionRepository.updateGuestToLogged(this.sessionId, userId, guestId);
             if (updatedSession) {
-                this.guests = this.populateGuests(updatedSession.guests as GuestDocument[]);
+                this.guests = await this.populateGuests(updatedSession.guests as GuestDocument[]);
                 return this;
             }
             return null;
@@ -135,17 +128,16 @@ export class Session implements SessionInterface {
             const sessionRepository = new SessionRepository();
             const sessions = await sessionRepository.findAll();
             if (sessions) {
-                const sessionInstances = sessions.map((session: SessionDocument) => {
+                return Promise.all(sessions.map(async (session: SessionDocument) => {
                     const sessionInstance = new Session({
                         sessionId: session.id,
-                        tableId: session.tableId,
+                        tableId: await new Table({ tableId: session.tableId.toString() }).findById(),
                         guests: [],
                         status: session.status
                     });
-                    sessionInstance.guests = sessionInstance.populateGuests(session.guests as GuestDocument[]);
+                    sessionInstance.guests = await sessionInstance.populateGuests(session.guests as GuestDocument[]);
                     return sessionInstance;
-                });
-                return sessionInstances;
+                }));
             }
             return null;
         } catch (error) {
@@ -157,7 +149,6 @@ export class Session implements SessionInterface {
     public async updateStatus(status: 'Activa' | 'Pagando' | 'Finalizada'): Promise<Session | null> {
         try {
             const updatedSession = await this.sessionRepository.update(this.sessionId, { status });
-            //Si el status es Finalizada cambiar el endedAt a new Date()
             if (updatedSession) {
                 this.status = updatedSession.status;
                 return this;
@@ -172,7 +163,8 @@ export class Session implements SessionInterface {
     public async save(): Promise<Session> {
         const savedSession = await this.sessionRepository.save(this);
         this.sessionId = savedSession.id;
-        this.guests = this.populateGuests(savedSession.guests as GuestDocument[]);
+        this.tableId = await new Table({ tableId: savedSession.tableId.toString() }).findById();
+        this.guests = await this.populateGuests(savedSession.guests as GuestDocument[]);
         return this;
     }
 }

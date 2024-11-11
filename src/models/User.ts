@@ -43,7 +43,7 @@ export class User implements UserInterface {
       return true;
     }
 
-    return null;
+    return null; //No existe
   }
 
   //Encriptar contraseña
@@ -98,6 +98,20 @@ export class User implements UserInterface {
   //Eliminar
   public async delete(){
     return await this.userRepository.delete(this.userId);
+  }
+
+  //Obtener todos los usuarios por Rol
+  static async getUsersByRole(roleId: string){
+    const userRepository = new UserRepository();
+    const users = await userRepository.getUsersByRole(roleId);
+    if (users) {
+      return users.map((user : any) => {
+        const roles = user.roles.map((role : RoleInterface) => { return new Role({roleId: role.roleId, name: role.name, permissions: role.permissions}) });
+        return new User({userId: user.id, name: user.name, lastname: user.lastname, email: user.email, password: user.password, confirmed: user.confirmed, roles: roles})
+      });
+    }
+
+    return null;
   }
 
   //Guardar en la base de datos

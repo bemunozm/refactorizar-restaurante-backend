@@ -2,10 +2,11 @@ import { Order } from "../models/Order";
 import { OrderInterface } from "../interfaces/OrderInterface";
 import { Session } from "../models/Session";
 import { Product } from "../models/Product";
+import { User } from "../models/User";
 
 export class OrderService {
-    public async orderProducts(orderData: Partial<OrderInterface>) {
-        const { items, sessionId, tableId, guestId, userId } = orderData;
+    public async orderProducts(orderData) {
+        const { items, sessionId, guestId, userId } = orderData;
         
         //Verificar si la session existe
         const session = await new Session({ sessionId: sessionId.toString() }).findById();
@@ -16,25 +17,42 @@ export class OrderService {
 
         //Verificar si los items existen
         for (const item of items) {
-            const product = new Product({productId: item.productId});
+            const product = new Product({productId: item.productId.toString()});
             await product.findById();
-            console.log(product);
             if (!product) {
                 throw new Error(`Producto no encontrado: ${item.productId}`);
             }
         }
 
-        //Crear la orden
-        const order = new Order({
-            sessionId: sessionId,
-            tableId: tableId,
-            guestId: guestId || '',
-            userId: userId || '',
-            items: items,
-            status: 'Sin Pagar'
-        });
-
-        return await order.save();
+        if (userId) {
+            const user = new User({ userId });
+            await user.findById();
+            if (!user) {
+                throw new Error(`Usuario no encontrado: ${userId}`);
+            }
+            const order = new Order({
+                sessionId: session.sessionId,
+                tableId: session.tableId.tableId,
+                userId: user.userId,
+                items: items,
+                status: 'Sin Pagar'
+            });
+            console.log(order);
+            return await order.save();
+        } else {
+            if (!guestId) {
+                throw new Error('guestId es requerido');
+            }
+            const order = new Order({
+                sessionId: session,
+                tableId: session.tableId,
+                guestId: {guestId: guestId, name: '', user: '', orders: []},
+                items: items,
+                status: 'Sin Pagar'
+            });
+            return await order.save();
+        }
+        
     }
 
     public async getOrders() {

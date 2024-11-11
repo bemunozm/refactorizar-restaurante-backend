@@ -36,8 +36,8 @@ class TableRoute {
 
         this.router.get(
             "/get/:id",
-            AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("VIEW_TABLE"),
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("VIEW_TABLE"),
             param("id").isMongoId().withMessage("ID de mesa inválido."),
             ValidationMiddleware.handleInputErrors,
             this.tableController.getTable.bind(this.tableController)

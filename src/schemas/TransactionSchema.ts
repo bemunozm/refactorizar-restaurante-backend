@@ -3,7 +3,7 @@ import { TransactionDocument } from "../interfaces/TransactionInterface";
 
 
 
-const TransactionSchema: Schema = new Schema<TransactionDocument>({
+const TransactionSchema: Schema = new Schema({
     token: { type: String, trim: true },
     orders: [{ type: Types.ObjectId , required: true, ref: "Order" }],
     sessionId: { type: Schema.Types.ObjectId, required: true, ref: "Session" },

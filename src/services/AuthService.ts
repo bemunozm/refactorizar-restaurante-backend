@@ -132,7 +132,7 @@ export class AuthService {
                     throw new Error('Invitado no encontrado en la sesión');
                 }
 
-                const order = new Order({ guestId: guestId, sessionId: sessionId, tableId: tableId, userId: user.userId, items: [], status: "Sin Pagar" });
+                const order = new Order({ guestId: {guestId: guestId, name: '', user: '', orders: []}, sessionId: sessionId, tableId: tableId, userId: user.userId, items: [], status: "Sin Pagar" });
                 await order.updateGuestToUserOrders();
             }
             // Generar el JWT para el usuario y enviar la sesión y mesa
@@ -198,7 +198,7 @@ export class AuthService {
         const tokenExists = await tokenInstance.findByToken();
         if (!tokenExists) throw new Error("Token no encontrado");
 
-        const user = new User({ userId: tokenExists.user, name: '', lastname: '', email: '', password: '', confirmed: false, roles: [] });
+        const user = new User({ userId:tokenExists.user.userId, name: '', lastname: '', email: '', password: '', confirmed: false, roles: [] });
         await user.findById();
 
         if (user.confirmed) throw new Error("La cuenta ya ha sido confirmada");
@@ -261,7 +261,7 @@ export class AuthService {
         const tokenExists = await tokenInstance.findByToken();
         if (!tokenExists) throw new Error("Token no encontrado");
 
-        const user = new User({ userId: tokenExists.user, name: '', lastname: '', email: '', password: '', confirmed: false, roles: [] });
+        const user = new User({ userId: tokenExists.user.userId, name: '', lastname: '', email: '', password: '', confirmed: false, roles: [] });
         await user.findById();
 
         //Encriptar contraseña

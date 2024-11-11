@@ -32,10 +32,10 @@ public async updateGuestToUserOrders(guestId: string, userId: string) {
   public async save(order: Order): Promise<OrderDocument> {
     try {
       const orderDocument = new this.model({
-        sessionId: order.sessionId,
-        tableId: order.tableId,
-        guestId: order.guestId || undefined,
-        userId: order.userId || undefined,
+        sessionId: order.sessionId.sessionId,
+        tableId: order.tableId.tableId,
+        guestId: order.guestId.guestId || undefined,
+        userId: order.userId.userId || undefined,
         items: order.items.map(item => ({
             productId: item.productId,
             quantity: item.quantity,

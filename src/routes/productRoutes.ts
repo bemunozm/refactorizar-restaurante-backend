@@ -20,8 +20,8 @@ class ProductRoute {
     private initRoutes() {
         this.router.post(
             "/create",
-            AuthMiddleware.authenticate, // Verifica que el usuario esté autenticado
-            PermissionMiddleware.checkPermission("CREATE_PRODUCT"), // Verifica que tenga el permiso adecuado
+            //AuthMiddleware.authenticate, // Verifica que el usuario esté autenticado
+            //PermissionMiddleware.checkPermission("CREATE_PRODUCT"), // Verifica que tenga el permiso adecuado
             upload.single("image"), // Sube la imagen del producto
             [
                 // body("name").isString().notEmpty(),

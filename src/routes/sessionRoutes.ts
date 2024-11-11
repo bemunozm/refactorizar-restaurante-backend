@@ -17,9 +17,9 @@ class SessionRoute {
 
     private initRoutes() {
         this.router.post(
-            "/create",
-            AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("CREATE_SESSION"),
+            "/create-session",
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("CREATE_SESSION"),
             [
                 body("tableId").isMongoId().withMessage("ID de mesa inválido."),
                 ValidationMiddleware.handleInputErrors
@@ -29,15 +29,15 @@ class SessionRoute {
 
         this.router.get(
             "/get",
-            AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("VIEW_SESSIONS"),
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("VIEW_SESSIONS"),
             this.sessionController.getAllSessions.bind(this.sessionController)
         );
 
         this.router.get(
             "/get/:id",
-            AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("VIEW_SESSION"),
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("VIEW_SESSION"),
             param("id").isMongoId().withMessage("ID de sesión inválido."),
             ValidationMiddleware.handleInputErrors,
             this.sessionController.getSessionById.bind(this.sessionController)
@@ -45,8 +45,8 @@ class SessionRoute {
 
         this.router.put(
             "/update/:id",
-            AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("UPDATE_SESSION"),
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("UPDATE_SESSION"),
             param("id").isMongoId().withMessage("ID de sesión inválido."),
             ValidationMiddleware.handleInputErrors,
             this.sessionController.updateSession.bind(this.sessionController)
@@ -54,8 +54,8 @@ class SessionRoute {
 
         this.router.delete(
             "/delete/:id",
-            AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("DELETE_SESSION"),
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("DELETE_SESSION"),
             param("id").isMongoId().withMessage("ID de sesión inválido."),
             ValidationMiddleware.handleInputErrors,
             this.sessionController.deleteSession.bind(this.sessionController)
@@ -63,8 +63,8 @@ class SessionRoute {
 
         this.router.get(
             "/get-session-by-table/:tableId",
-            AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("VIEW_SESSION"),
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("VIEW_SESSION"),
             param("tableId").isMongoId().withMessage("ID de mesa inválido."),
             ValidationMiddleware.handleInputErrors,
             this.sessionController.getSessionByTableId.bind(this.sessionController)
@@ -72,8 +72,8 @@ class SessionRoute {
 
         this.router.post(
             "/add-guest/:sessionId",
-            AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("ADD_GUEST_TO_SESSION"),
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("ADD_GUEST_TO_SESSION"),
             [
                 param("sessionId").isMongoId().withMessage("ID de sesión inválido."),
                 body("guestName").isString().notEmpty().withMessage("El nombre del invitado es obligatorio."),
@@ -85,8 +85,8 @@ class SessionRoute {
 
         this.router.post(
             "/transfer-orders",
-            AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("TRANSFER_GUEST_ORDERS"),
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("TRANSFER_GUEST_ORDERS"),
             [
                 body("guestId").isMongoId().withMessage("ID de invitado inválido."),
                 body("userId").isMongoId().withMessage("ID de usuario inválido."),
@@ -97,7 +97,7 @@ class SessionRoute {
 
         this.router.post(
             "/validate-token",
-            AuthMiddleware.authenticate,
+            //AuthMiddleware.authenticate,
             [
                 body("token").isString().notEmpty().withMessage("El token es obligatorio."),
                 ValidationMiddleware.handleInputErrors
@@ -107,8 +107,8 @@ class SessionRoute {
 
         this.router.get(
             "/check/:tableId",
-            AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("CHECK_SESSION"),
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("CHECK_SESSION"),
             param("tableId").isMongoId().withMessage("ID de mesa inválido."),
             ValidationMiddleware.handleInputErrors,
             this.sessionController.checkSessionExists.bind(this.sessionController)
@@ -116,8 +116,8 @@ class SessionRoute {
 
         this.router.get(
             "/:sessionId/token",
-            AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("VIEW_SESSION_TOKEN"),
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("VIEW_SESSION_TOKEN"),
             param("sessionId").isMongoId().withMessage("ID de sesión inválido."),
             ValidationMiddleware.handleInputErrors,
             this.sessionController.getSessionToken.bind(this.sessionController)

@@ -1,11 +1,13 @@
 import { Document } from "mongoose";
+import { User } from "../models/User";
+import { Session } from "../models/Session";
 
 
 export interface TokenInterface {
-    userId?: string;
+    tokenId?: string;
     token: string;
-    user?: string;
-    session?: string;
+    user?: User | string;
+    session?: Session | string;
 }
 
 export interface TokenDocument extends TokenInterface, Document {}

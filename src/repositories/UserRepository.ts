@@ -25,7 +25,7 @@ export class UserRepository extends GenericRepository<UserDocument> {
           roles: userModel.roles
         }
       } else {
-        return null
+        return null //No lo encuentra
       }
     } catch (error) {
         console.error(`Error al buscar por email: ${error}`);
@@ -74,6 +74,16 @@ export class UserRepository extends GenericRepository<UserDocument> {
     } catch (error) {
       console.error(`Error al guardar el usuario: ${error}`);
       throw new Error("Error al guardar el documento del usuario");
+    }
+  }
+
+  // Metodo para obtener todos los usuarios por rol
+  public async getUsersByRole(roleId: string): Promise<UserDocument[] | null> {
+    try {
+      return await this.model.find({ roles: roleId }).populate("roles").exec();
+    } catch (error) {
+      console.error(`Error al buscar por rol: ${error}`);
+      throw new Error("Error al buscar el documento por rol");
     }
   }
 }

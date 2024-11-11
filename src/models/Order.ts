@@ -4,12 +4,13 @@ import { Session } from "./Session";
 import { Table } from "./Table";
 import { Product } from "./Product";
 import { User } from "./User";
+import { GuestInterface } from "../interfaces/GuestInterface";
 
 export class Order implements OrderInterface {
     public orderId?: string;
     public sessionId: Session;
     public tableId: Table;
-    public guestId: string;
+    public guestId: GuestInterface; // Usamos GuestInterface directamente
     public userId: User;
     public items: OrderItemInterface[];
     public status: 'Sin Pagar' | 'Pagado' | 'Pendiente';
@@ -21,7 +22,7 @@ export class Order implements OrderInterface {
         this.orderId = order.orderId?.toString();
         this.sessionId = new Session({ sessionId: order.sessionId?.toString() || '' });
         this.tableId = new Table({ tableId: order.tableId?.toString() || '' });
-        this.guestId = order.guestId?.toString() || '';
+        this.guestId = order.guestId || { name: '', orders: [] }; // Asignar GuestInterface vacío si no está definido
         this.userId = new User({ userId: order.userId?.toString() || '' });
         this.items = order.items || [];
         this.status = order.status || 'Sin Pagar';
@@ -47,13 +48,19 @@ export class Order implements OrderInterface {
         }))) as OrderItemInterface[];
     
         this.status = orderDoc.status;
-        this.guestId = orderDoc.guestId.toString();
+
+        // Asignar directamente guestId conforme a GuestInterface sin necesidad de instanciar
+        this.guestId = {
+            guestId: orderDoc.guestId?.toString(),
+            name: orderDoc.guestId?.name || '',
+            user: (orderDoc.guestId && typeof orderDoc.guestId !== 'string') ? orderDoc.guestId.user : undefined,
+            orders: orderDoc.guestId?.orders || []
+        };
+
         this.createdAt = orderDoc.createdAt;
         this.updatedAt = orderDoc.updatedAt;
-
     }
     
-
     public async save(): Promise<Order> {
         const savedOrder = await this.orderRepository.save(this);
         await this.populateOrder(savedOrder);
@@ -74,7 +81,7 @@ export class Order implements OrderInterface {
         const orderRepository = new OrderRepository();
         const orders = await orderRepository.findBySessionId(sessionId);
         if (orders) {
-            return Promise.all(orders.map(async (orderDoc) => {
+            return await Promise.all(orders.map(async (orderDoc) => {
                 const order = new Order({});
                 await order.populateOrder(orderDoc);
                 return order;
@@ -132,7 +139,7 @@ export class Order implements OrderInterface {
     }
 
     public async updateGuestToUserOrders(): Promise<boolean> {
-        const updated = await this.orderRepository.updateGuestToUserOrders(this.guestId, this.userId.userId);
+        const updated = await this.orderRepository.updateGuestToUserOrders(this.guestId.guestId, this.userId.userId);
         return updated ? true : false;
     }
 }

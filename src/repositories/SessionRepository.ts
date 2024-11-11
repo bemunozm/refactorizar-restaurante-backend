@@ -65,7 +65,7 @@ export class SessionRepository extends GenericRepository<SessionDocument> {
         try {
             const sessionDocument = new this.model({
             sessionId: session.sessionId,
-            tableId: session.tableId,
+            tableId: session.tableId.tableId,
             guests: session.guests,
             status: session.status,
             });

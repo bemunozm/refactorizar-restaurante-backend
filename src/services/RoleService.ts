@@ -1,6 +1,7 @@
 import { Role } from "../models/Role";
 import { RoleInterface } from "../interfaces/RoleInterface";
 import { permissionGroups } from "../config/permissions";
+import { User } from "../models/User";
 
 
 export class RoleService {
@@ -30,6 +31,19 @@ export class RoleService {
 
     public async deleteRole(id: string) {
         const role = new Role({ roleId: id });
+
+        // Verificar si el rol existe
+        if (!role.roleId) {
+            throw new Error('Rol no encontrado');
+        }
+
+        // Verifica si el rol está asociado a algún usuario
+        const users = await User.getUsersByRole(role.roleId);
+        if (users.length > 0) {
+            throw new Error('No se puede eliminar el rol porque tiene usuarios asociados');
+        }
+
+        // Eliminar el rol
         return await role.delete();
     }
 }

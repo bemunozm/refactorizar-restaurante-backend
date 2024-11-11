@@ -9,7 +9,7 @@ export class ProductRepository extends GenericRepository<ProductDocument> {
     constructor() {
         super(ProductRepository.mongooseModel);
     }
-    public async save(product: ProductInterface) {
+    public async save(product) {
         const productDocument = new this.model({
             name: product.name,
             price: product.price,

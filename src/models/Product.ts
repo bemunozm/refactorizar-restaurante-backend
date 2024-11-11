@@ -3,6 +3,7 @@ import { ProductInterface } from "../interfaces/ProductInterface";
 import { IngredientInterface } from "../interfaces/IngredientInterface";
 import { CategoryInterface } from "../interfaces/CategoryInterface";
 import { Category } from "./Category";
+import { Ingredient } from "./Ingredient";
 
 export class Product implements ProductInterface {
     public productId?: string;
@@ -15,14 +16,43 @@ export class Product implements ProductInterface {
     private productRepository: ProductRepository;
 
     constructor(data: Partial<ProductInterface>) {
-        this.productId = data.productId.toString();
+        this.productId = data.productId?.toString();
         this.name = data.name || '';
         this.price = data.price || 0;
         this.about = data.about || '';
-        this.categoryId = data.categoryId instanceof Category ? data.categoryId : new Category(data.categoryId || {});
+        this.categoryId = data.categoryId instanceof Category ? data.categoryId : new Category({categoryId: data.categoryId || ''});
         this.ingredients = data.ingredients || [];
         this.image = data.image || '';
         this.productRepository = new ProductRepository();
+    }
+
+    private async populateProduct(productDoc: any): Promise<void> {
+        this.productId = productDoc.id;
+        this.name = productDoc.name;
+        this.price = productDoc.price;
+        this.about = productDoc.about;
+        this.image = productDoc.image;
+
+        // Cargar la categoría completa si está presente
+        if (productDoc.categoryId) {
+            this.categoryId = await new Category({categoryId:productDoc.categoryId}).findById();
+        }
+
+        // Cargar los ingredientes completos si están presentes
+        this.ingredients = await Promise.all(
+            productDoc.ingredients.map(async (ingredientDoc: any) => {
+                const ingredient = await new Ingredient({ingredientId: ingredientDoc.ingredientId}).findById();
+
+                const ingredientData = {
+                    ingredientId: ingredient.ingredientId,
+                    name: ingredient.name,
+                    image: ingredient.image,
+                    unit: ingredient.unit,
+                    quantityRequired: ingredientDoc.quantityRequired,
+                };
+                return ingredientData;
+            })
+        );
     }
 
     public async save() {
@@ -33,47 +63,21 @@ export class Product implements ProductInterface {
 
     static async getAll() {
         const productRepository = new ProductRepository();
-        const productInstances = await productRepository.findAll('categoryId');
+        const productInstances = await productRepository.findAll();
+
         console.log(productInstances);
-
-        if (productInstances) {
-            const products = productInstances.map((productInstance) => {
-                const categoryInstance = new Category({
-                    categoryId: productInstance.categoryId?.categoryId.toString(),
-                    name: productInstance.categoryId?.name
-                });
-                
-                return new Product({
-                    productId: productInstance.id,
-                    name: productInstance.name,
-                    price: productInstance.price,
-                    about: productInstance.about,
-                    categoryId: categoryInstance,
-                    ingredients: productInstance.ingredients,
-                    image: productInstance.image,
-                });
-            });
-
-            return products;
-        }
-
-        return [];
+        return Promise.all(productInstances.map(async (productInstance) => {
+            const product = new Product({});
+            await product.populateProduct(productInstance);
+            console.log(product);
+            return product;
+        }));
     }
 
     public async findById() {
         const product = await this.productRepository.findById(this.productId);
-
         if (product) {
-            this.productId = product.id;
-            this.name = product.name;
-            this.price = product.price;
-            this.about = product.about;
-            this.categoryId = new Category({
-                categoryId: product.categoryId.categoryId,
-                name: product.categoryId.name
-            });
-            this.ingredients = product.ingredients;
-            this.image = product.image;
+            await this.populateProduct(product);
             return this;
         } else {
             return null;
@@ -82,15 +86,8 @@ export class Product implements ProductInterface {
 
     public async update(updateData: Partial<ProductInterface>) {
         const updatedInstance = await this.productRepository.update(this.productId, updateData);
-
         if (updatedInstance) {
-            this.productId = updatedInstance.id;
-            this.name = updatedInstance.name;
-            this.price = updatedInstance.price;
-            this.about = updatedInstance.about;
-            this.categoryId = await new Category(updatedInstance.categoryId).findById();
-            this.ingredients = updatedInstance.ingredients;
-            this.image = updatedInstance.image;
+            await this.populateProduct(updatedInstance);
             return this;
         } else {
             return null;
@@ -105,22 +102,12 @@ export class Product implements ProductInterface {
         const productRepository = new ProductRepository();
         const productInstances = await productRepository.findByCategoryId(categoryId);
 
-        if (productInstances) {
-            const products = productInstances.map((productInstance) => {
-                return new Product({
-                    productId: productInstance.id,
-                    name: productInstance.name,
-                    price: productInstance.price,
-                    about: productInstance.about,
-                    categoryId: new Category(productInstance.categoryId),
-                    ingredients: productInstance.ingredients,
-                    image: productInstance.image,
-                });
-            });
+        const products = await Promise.all(productInstances.map(async (productInstance) => {
+            const product = new Product({});
+            await product.populateProduct(productInstance);
+            return product;
+        }));
 
-            return products;
-        } else {
-            return [];
-        }
+        return products;
     }
 }

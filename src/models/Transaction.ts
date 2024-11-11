@@ -1,11 +1,12 @@
 import { TransactionRepository } from "../repositories/TransactionRepository";
 import { TransactionInterface } from "../interfaces/TransactionInterface";
 import { OrderInterface } from "../interfaces/OrderInterface";
+import { Session } from "./Session";
 
 export class Transaction implements TransactionInterface {
     public transactionId?: string;
     public token: string;
-    public orders: OrderInterface[];
+    public orders: string[];
     public sessionId: string;
     public amount: number;
     public status: 'CREADA' | 'CONFIRMADA' | 'ANULADA';
@@ -15,7 +16,7 @@ export class Transaction implements TransactionInterface {
         this.transactionId = data.transactionId;
         this.token = data.token || '';
         this.orders = data.orders || [];
-        this.sessionId = data.sessionId.toString() || '';
+        this.sessionId = data.sessionId || '';
         this.amount = data.amount || 0;
         this.status = data.status || 'CREADA';
         this.transactionRepository = new TransactionRepository();
@@ -38,9 +39,18 @@ export class Transaction implements TransactionInterface {
         }));
     }
 
+    private async populateSession(sessionId: string): Promise<Session> {
+        const session = await new Session({ sessionId }).findById();
+        if (!session) {
+            throw new Error(`Session with ID ${sessionId} not found`);
+        }
+        return session;
+    }
+
     public async save() {
         const savedTransaction = await this.transactionRepository.save(this);
-        this.transactionId = savedTransaction.transactionId;
+        console.log(savedTransaction);
+        this.transactionId = savedTransaction.id;
         this.status = savedTransaction.status;
         return this;
     }
@@ -50,7 +60,7 @@ export class Transaction implements TransactionInterface {
         if (transaction) {
             this.transactionId = transaction.transactionId;
             this.sessionId = transaction.sessionId.toString();
-            this.orders = this.populateOrders(transaction.orders);
+            this.orders = transaction.orders;
             this.amount = transaction.amount;
             this.status = transaction.status;
             return this;
@@ -62,7 +72,7 @@ export class Transaction implements TransactionInterface {
         const transaction = await this.transactionRepository.findById(this.transactionId);
         if (transaction) {
             this.token = transaction.token;
-            this.orders = this.populateOrders(transaction.orders);
+            this.orders = transaction.orders;
             this.sessionId = transaction.sessionId.toString();
             this.amount = transaction.amount;
             this.status = transaction.status;

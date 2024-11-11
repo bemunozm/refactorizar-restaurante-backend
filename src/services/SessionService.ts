@@ -14,7 +14,7 @@ export class SessionService {
         if (existingSession) throw new Error("Ya existe una sesión activa para esta mesa.");
 
         await sessionInstance.save();
-        const newSessionToken = new Token({ session: sessionInstance.sessionId, token: generateToken() });
+        const newSessionToken = new Token({ session: sessionInstance, token: generateToken() });
         await newSessionToken.save();
 
         return sessionInstance;
@@ -65,6 +65,10 @@ export class SessionService {
             const user = await new User({ userId: userId, name: '', lastname: '', email: '', password: '', confirmed: false, roles: []}).findById();
 
             if (!user) throw new Error("User not found");
+            
+            //Agregar el usuario a la sesión
+            await session.addGuest({ name: user.name, user:user.userId ,orders: [] });
+
             const token = generateJWT({ id: user.userId, sessionId, role: 'Usuario' });
             return { token, sessionId };
         }
@@ -78,7 +82,7 @@ export class SessionService {
 
     public async transferGuestOrdersToUser(guestId: string, userId: string) {
         //Actualizar los pedidos del invitado para que pertenezcan al usuario
-        const order = new Order({ guestId: guestId, sessionId: '', tableId: '', userId: userId, items: [], status: "Sin Pagar" });
+        const order = new Order({ guestId: { guestId: guestId.toString(), name: '', orders: [] }, sessionId: '', tableId: '', userId: userId, items: [], status: "Sin Pagar" });
 
         //Actualizar los pedidos de invitado a usuario
         const updatedOrders = await order.updateGuestToUserOrders();
@@ -100,6 +104,6 @@ export class SessionService {
     }
 
     public async getSessionToken(sessionId: string) {
-        return await new Token({ session: sessionId, token: '' }).findBySessionId();
+        return await new Token({ session: sessionId.toString(), token: '' }).findBySessionId();
     }
 }

@@ -10,7 +10,7 @@ export class OrderController {
 
     public async orderProducts(req: Request, res: Response): Promise<Response> {
         try {
-            
+            console.log(req.body);
             const order = await this.orderService.orderProducts(req.body);
             return res.status(201).json({ message: 'Pedido realizado con éxito', order });
         } catch (error) {

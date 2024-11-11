@@ -4,14 +4,16 @@ import { UserRepository } from "../repositories/UserRepository";
 import { UserInterface } from "../interfaces/UserInterface";
 import { Session } from "../models/Session";
 import { User } from "../models/User";
+import { GuestInterface } from "../interfaces/GuestInterface";
+import { Table } from "../models/Table";
 
 declare global {
     namespace Express {
         interface Request {
             user?: UserInterface; // Usuario registrado
-            guest?: any; // Invitado (de tipo `GuestType`, que se definirá luego)
-            sessionId?: string; // ID de la sesión
-            tableId?: string; // ID de la mesa
+            guest?: GuestInterface; // Invitado (de tipo `GuestType`, que se definirá luego)
+            sessionId?: Session; // ID de la sesión
+            tableId?: Table; // ID de la mesa
             role: string;
         }
     }
@@ -29,12 +31,20 @@ class AuthMiddleware {
 
         const [, token] = bearer.split(" ");
 
+        
+
         try {
             const decoded: any = jwt.verify(token, process.env.JWT_SECRET as string);
 
+            const session = new Session({ sessionId: decoded.sessionId });
+            await session.findById();
+
+            const table = new Table({ tableId: decoded.tableId });
+            await table.findById();
+            
             // Asigna sessionId y tableId desde el token decodificado, si existen
-            req.sessionId = decoded.sessionId || undefined;
-            req.tableId = decoded.tableId || undefined;
+            req.sessionId = session || undefined;
+            req.tableId = table || undefined;
 
             if (decoded.role === "Usuario") {
                 // Usuario registrado
@@ -48,15 +58,13 @@ class AuthMiddleware {
                     res.status(401).json({ error: "Usuario No Encontrado" });
                 }
             } else if (decoded.role === "Invitado") {
-                const session = new Session({ sessionId: decoded.sessionId });
-                await session.findById();
-
+                          
                 if (!session) {
                     res.status(500).json({ error: "Este invitado no pertenece a ninguna sesión activa" });
                     return;
                 }
-
-                const guest = session.guests.find((guest: any) => guest._id.toString() === decoded.id);
+                const guest = session.guests.find((guest: GuestInterface) => guest.guestId === decoded.id);
+                console.log('session');
                 if (guest) {
                     req.guest = guest;
                     req.role = "Invitado";
