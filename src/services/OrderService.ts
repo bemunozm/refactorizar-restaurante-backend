@@ -7,7 +7,6 @@ import { User } from "../models/User";
 export class OrderService {
     public async orderProducts(orderData) {
         const { items, sessionId, guestId, userId } = orderData;
-        
         //Verificar si la session existe
         const session = await new Session({ sessionId: sessionId.toString() }).findById();
 
@@ -17,7 +16,7 @@ export class OrderService {
 
         //Verificar si los items existen
         for (const item of items) {
-            const product = new Product({productId: item.productId.toString()});
+            const product = new Product({productId: item.productId});
             await product.findById();
             if (!product) {
                 throw new Error(`Producto no encontrado: ${item.productId}`);
@@ -31,22 +30,22 @@ export class OrderService {
                 throw new Error(`Usuario no encontrado: ${userId}`);
             }
             const order = new Order({
-                sessionId: session.sessionId,
-                tableId: session.tableId.tableId,
-                userId: user.userId,
+                session: session.sessionId,
+                table: session.table.tableId,
+                user: user.userId,
                 items: items,
                 status: 'Sin Pagar'
             });
-            console.log(order);
+            console.log(order.items);
             return await order.save();
         } else {
             if (!guestId) {
                 throw new Error('guestId es requerido');
             }
             const order = new Order({
-                sessionId: session,
-                tableId: session.tableId,
-                guestId: {guestId: guestId, name: '', user: '', orders: []},
+                session: session,
+                table: session.table,
+                guest: {guestId: guestId, name: '', user: '', orders: []},
                 items: items,
                 status: 'Sin Pagar'
             });
@@ -78,7 +77,7 @@ export class OrderService {
     }
 
     public async getOrdersByUserId(userId: string) {
-        return await new Order({ userId }).findByUserId();
+        return await new Order({ user: userId }).findByUserId();
     }
 
     public async updateOrderStatus(orderId: string, status: 'Sin Pagar' | 'Pagado' | 'Pendiente') {

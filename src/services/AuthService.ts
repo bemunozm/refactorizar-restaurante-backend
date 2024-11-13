@@ -11,7 +11,7 @@ export class AuthService {
 
     public async createAccount(data: any): Promise<{ token: string; sessionId?: string }> {
         const { name, lastname, password, email, guestId, sessionId, tableId } = data;
-
+        console.log(data);
         //Instanciar el usuario
         const user = new User({name: name, lastname: lastname, email: email, password: password, confirmed: false, roles: []})
 
@@ -28,10 +28,12 @@ export class AuthService {
         await user.hashPassword()
 
         // Asignar el rol por defecto
-        user.roles = [role];
+        user.roles = [defaultRole];
         
         //Guardar el usuario
         await user.save()
+
+        console.log('Nuevo Usuario',user);
 
         // Generar token de confirmación de cuenta y guardar
         const token = new Token({ token: generateToken(), user: user.userId });
@@ -47,7 +49,7 @@ export class AuthService {
         // Manejar sesiones para invitados (enlace con pedidos, etc.)
         if (guestId) {
             // Encontrar la sesión y el invitado correspondiente
-            const session = new Session({ sessionId: sessionId, tableId: tableId, guests: [], status: "Activa" });
+            const session = new Session({ sessionId: sessionId, table: tableId, guests: [], status: "Activa" });
 
             //Verificar si la session existe
             const sessionExists = await session.findById();
@@ -57,7 +59,7 @@ export class AuthService {
             await session.updateGuestToLogged(guestId, user.userId);
 
             //Actualizar los pedidos del invitado para que pertenezcan al usuario
-            const order = new Order({ guestId: guestId, sessionId: sessionId, tableId: tableId, userId: user.userId, items: [], status: "Sin Pagar" });
+            const order = new Order({ guest: guestId, session: sessionId, table: tableId, user: user.userId, items: [], status: "Sin Pagar" });
 
             //Actualizar los pedidos de invitado a usuario
             await order.updateGuestToUserOrders();
@@ -120,7 +122,7 @@ export class AuthService {
 
             if (guestId) {
                 // 1. Encontrar la sesión y el invitado correspondiente
-                const session = new Session({ sessionId: sessionId, tableId: tableId, guests: [], status: "Activa" });
+                const session = new Session({ sessionId: sessionId, table: tableId, guests: [], status: "Activa" });
                 const sessionExists = await session.findById();
                 if (!sessionExists) {
                     throw new Error('Sesión no encontrada');
@@ -132,7 +134,7 @@ export class AuthService {
                     throw new Error('Invitado no encontrado en la sesión');
                 }
 
-                const order = new Order({ guestId: {guestId: guestId, name: '', user: '', orders: []}, sessionId: sessionId, tableId: tableId, userId: user.userId, items: [], status: "Sin Pagar" });
+                const order = new Order({ guest: {guestId: guestId, name: '', user: '', orders: []}, session: sessionId, table: tableId, user: user.userId, items: [], status: "Sin Pagar" });
                 await order.updateGuestToUserOrders();
             }
             // Generar el JWT para el usuario y enviar la sesión y mesa

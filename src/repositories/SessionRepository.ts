@@ -14,7 +14,7 @@ export class SessionRepository extends GenericRepository<SessionDocument> {
 
     public async findActiveSessionByTableId(tableId: string): Promise<SessionDocument | null> {
         try {
-            return await this.model.findOne({ tableId, status: 'Activa' }).exec();
+            return await this.model.findOne({ table: tableId, status: 'Activa' }).exec();
         } catch (error) {
             console.error(`Error al buscar una sesión activa para la mesa: ${error}`);
             throw new Error("Error al verificar la sesión activa de la mesa");
@@ -65,7 +65,7 @@ export class SessionRepository extends GenericRepository<SessionDocument> {
         try {
             const sessionDocument = new this.model({
             sessionId: session.sessionId,
-            tableId: session.tableId.tableId,
+            table: session.table.tableId,
             guests: session.guests,
             status: session.status,
             });

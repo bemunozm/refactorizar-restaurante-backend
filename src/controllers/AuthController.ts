@@ -88,7 +88,7 @@ export class AuthController {
 
     public async confirmAccount(req: Request, res: Response): Promise<Response> {
         try {
-            const { token } = req.params;
+            const { token } = req.body;
             await this.authService.confirmAccount(token);
             return res.json({ message: "Cuenta confirmada correctamente" });
         } catch (error) {
@@ -151,8 +151,8 @@ export class AuthController {
             return res.json({
                 user: req.user || {},
                 guest: req.guest || {},
-                sessionId: req.sessionId || '',
-                tableId: req.tableId || '',
+                session: req.sessionId || '',
+                table: req.tableId || '',
                 role: req.role || ''
             })
         } catch (error) {

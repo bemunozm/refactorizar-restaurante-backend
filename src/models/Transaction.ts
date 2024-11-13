@@ -2,12 +2,13 @@ import { TransactionRepository } from "../repositories/TransactionRepository";
 import { TransactionInterface } from "../interfaces/TransactionInterface";
 import { OrderInterface } from "../interfaces/OrderInterface";
 import { Session } from "./Session";
+import { Order } from "./Order";
 
 export class Transaction implements TransactionInterface {
     public transactionId?: string;
     public token: string;
-    public orders: string[];
-    public sessionId: string;
+    public orders: Order[];
+    public session: Session;
     public amount: number;
     public status: 'CREADA' | 'CONFIRMADA' | 'ANULADA';
     private transactionRepository: TransactionRepository;
@@ -15,78 +16,124 @@ export class Transaction implements TransactionInterface {
     constructor(data: Partial<TransactionInterface>) {
         this.transactionId = data.transactionId;
         this.token = data.token || '';
-        this.orders = data.orders || [];
-        this.sessionId = data.sessionId || '';
         this.amount = data.amount || 0;
         this.status = data.status || 'CREADA';
+        
+        // Sanitizar datos para asegurar que `session` y `orders` sean instancias de sus modelos
+        this.sanitizeData(data);
+
         this.transactionRepository = new TransactionRepository();
     }
 
-    private populateOrders(orders: any[]): OrderInterface[] {
-        return orders.map((order) => ({
-            orderId: order._id.toString(),
-            sessionId: order.sessionId.toString(),
-            tableId: order.tableId.toString(),
-            guestId: order.guestId ? order.guestId.toString() : null,
-            userId: order.userId ? order.userId.toString() : null,
-            items: order.items.map((item: any) => ({
-                productId: item.productId.toString(),
-                quantity: item.quantity,
-                status: item.status,
-                comment: item.comment || ''
-            })),
-            status: order.status
-        }));
+    /**
+     * Método para sanear y crear instancias mínimas de los datos relacionados.
+     */
+    private sanitizeData(data: Partial<TransactionInterface>) {
+        // Asegurar que `session` sea una instancia de `Session`
+        this.session = data.session instanceof Session 
+            ? data.session 
+            : new Session({ sessionId: data.session || '' });
+
+        // Asegurar que cada elemento en `orders` sea una instancia de `Order`
+        this.orders = (data.orders || []).map(order =>
+            order instanceof Order
+                ? order
+                : new Order({ orderId: order || '' })
+        );
     }
 
-    private async populateSession(sessionId: string): Promise<Session> {
-        const session = await new Session({ sessionId }).findById();
-        if (!session) {
-            throw new Error(`Session with ID ${sessionId} not found`);
+    /**
+     * Método para cargar completamente `session` y `orders`.
+     */
+    public async populate(): Promise<void> {
+        // Poblar `session` si solo tiene el ID
+        if (!this.session.status) {
+            this.session = await this.session.findById();
         }
-        return session;
+
+        // Poblar cada orden en `orders`
+        this.orders = await Promise.all(
+            this.orders.map(async (order) => {
+                if (!order.status) {  // Si solo tiene el ID
+                    return await order.findById();
+                }
+                return order;
+            })
+        );
     }
 
-    public async save() {
-        const savedTransaction = await this.transactionRepository.save(this);
-        console.log(savedTransaction);
+    /**
+     * Guarda la transacción en la base de datos.
+     */
+    public async save(): Promise<Transaction> {
+        const orders = this.orders.map(order => order.orderId);
+
+        const DataToSave = {
+            token: this.token,
+            amount: this.amount,
+            status: this.status,
+            session: this.session.sessionId,
+            orders: orders,
+        }
+
+        const savedTransaction = await this.transactionRepository.save(DataToSave);
         this.transactionId = savedTransaction.id;
         this.status = savedTransaction.status;
         return this;
     }
 
-    public async findByToken() {
+    /**
+     * Encuentra la transacción por token y carga sus datos completos.
+     */
+    public async findByToken(): Promise<Transaction | null> {
         const transaction = await this.transactionRepository.findByToken(this.token);
         if (transaction) {
-            this.transactionId = transaction.transactionId;
-            this.sessionId = transaction.sessionId.toString();
-            this.orders = transaction.orders;
+            this.transactionId = transaction.id;
+            this.token = transaction.token;
             this.amount = transaction.amount;
             this.status = transaction.status;
+
+            // Sanitizar y poblar `session` y `orders`
+            this.sanitizeData(transaction);
+            await this.populate();
+
             return this;
         }
         return null;
     }
 
-    public async findById() {
+    /**
+     * Encuentra la transacción por ID y carga sus datos completos.
+     */
+    public async findById(): Promise<Transaction | null> {
         const transaction = await this.transactionRepository.findById(this.transactionId);
         if (transaction) {
+            this.transactionId = transaction.id;
             this.token = transaction.token;
-            this.orders = transaction.orders;
-            this.sessionId = transaction.sessionId.toString();
             this.amount = transaction.amount;
             this.status = transaction.status;
+
+            // Sanitizar y poblar `session` y `orders`
+            this.sanitizeData(transaction);
+            await this.populate();
+
             return this;
         }
         return null;
     }
 
-    public async updateToken(token: string) {
+    /**
+     * Actualiza el token de la transacción.
+     */
+    public async updateToken(token: string): Promise<void> {
         await this.transactionRepository.updateToken(this.transactionId, token);
         this.token = token;
     }
 
-    public async updateStatus(status: 'CREADA' | 'CONFIRMADA' | 'ANULADA') {
+    /**
+     * Actualiza el estado de la transacción.
+     */
+    public async updateStatus(status: 'CREADA' | 'CONFIRMADA' | 'ANULADA'): Promise<void> {
         await this.transactionRepository.updateStatus(this.transactionId, status);
         this.status = status;
     }

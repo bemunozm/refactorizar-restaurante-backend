@@ -10,11 +10,13 @@ export class ProductRepository extends GenericRepository<ProductDocument> {
         super(ProductRepository.mongooseModel);
     }
     public async save(product) {
+        
+    
         const productDocument = new this.model({
             name: product.name,
             price: product.price,
             about: product.about,
-            categoryId: product.categoryId.categoryId,
+            category: product.category,
             ingredients: product.ingredients,
             image: product.image,
         });
@@ -22,6 +24,6 @@ export class ProductRepository extends GenericRepository<ProductDocument> {
     }
 
     public async findByCategoryId(categoryId: string) {
-        return await this.model.find({ categoryId });
+        return await this.model.find({ category: categoryId });
     }
 }

@@ -29,19 +29,14 @@ public async updateGuestToUserOrders(guestId: string, userId: string) {
   
 
   // Método para guardar una instancia de Order en la base de datos
-  public async save(order: Order): Promise<OrderDocument> {
+  public async save(order): Promise<OrderDocument> {
     try {
       const orderDocument = new this.model({
-        sessionId: order.sessionId.sessionId,
-        tableId: order.tableId.tableId,
-        guestId: order.guestId.guestId || undefined,
-        userId: order.userId.userId || undefined,
-        items: order.items.map(item => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            status: item.status,
-            comment: item.comment
-        })),
+        session: order.session.sessionId,
+        table: order.table.tableId,
+        guest: order.guest.guestId || undefined,
+        user: order.user.userId || undefined,
+        items: order.items,
         status: order.status,
       });
       return await orderDocument.save();
@@ -62,7 +57,7 @@ public async updateGuestToUserOrders(guestId: string, userId: string) {
 
     public async findForKitchen() {
         const activeSessions = await SessionModel.find({ status: 'Activa' }).select('_id');
-        return await this.model.find({ sessionId: { $in: activeSessions } })
+        return await this.model.find({ session: { $in: activeSessions } })
             .sort({ createdAt: 1 });
     }
 
@@ -72,7 +67,7 @@ public async updateGuestToUserOrders(guestId: string, userId: string) {
     }
 
     public async findBySessionId(sessionId: string) {
-        return await this.model.find({ sessionId })
+        return await this.model.find({ session: sessionId })
     }
 
 }

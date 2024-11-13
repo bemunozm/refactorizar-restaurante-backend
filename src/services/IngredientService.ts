@@ -7,7 +7,7 @@ export class IngredientService {
             name: data.name,
             stockQuantity: data.stockQuantity,
             unit: data.unit,
-            image: file ? `/uploads/images/${file.fieldname}` : '/uploads/images/default.jpg',
+            image: file ? `/uploads/images/${file.filename}` : '/uploads/images/default.jpg',
         };
 
         const ingredient = new Ingredient(ingredientData);

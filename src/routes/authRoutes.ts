@@ -19,7 +19,8 @@ class AuthRoute {
         this.router.post(
             "/register",
             [
-                body("username").isString().notEmpty(),
+                body("name").isString().notEmpty(),
+                body("lastname").isString().notEmpty(),
                 body("email").isEmail(),
                 body("password").isString().isLength({ min: 6 }),
                 ValidationMiddleware.handleInputErrors
@@ -59,7 +60,7 @@ class AuthRoute {
             PermissionMiddleware.checkPermission("UPDATE_USER"),
             [
                 param("id").isMongoId(),
-                body("username").isString().optional(),
+                body("name").isString().optional(),
                 body("email").isEmail().optional(),
                 body("password").isString().optional(),
                 ValidationMiddleware.handleInputErrors
@@ -81,7 +82,7 @@ class AuthRoute {
             AuthMiddleware.authenticate,
             PermissionMiddleware.checkPermission("CREATE_USER"),
             [
-                body("username").isString().notEmpty(),
+                body("name").isString().notEmpty(),
                 body("email").isEmail(),
                 body("password").isString().isLength({ min: 6 }),
                 ValidationMiddleware.handleInputErrors

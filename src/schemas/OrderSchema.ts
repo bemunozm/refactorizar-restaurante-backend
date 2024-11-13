@@ -3,19 +3,20 @@ import { OrderDocument } from "../interfaces/OrderInterface";
 
 export const OrderSchema = new Schema<OrderDocument>(
     {
-      sessionId: { type: Schema.Types.ObjectId, ref: "Session", required: true },
-      tableId: { type: Schema.Types.ObjectId, ref: "Table", required: true },
-      guestId: { type: Schema.Types.ObjectId },
-      userId: { type: Schema.Types.ObjectId, ref: "User" },
+      session: { type: Schema.Types.ObjectId, ref: "Session", required: true },
+      table: { type: Schema.Types.ObjectId, ref: "Table", required: true },
+      guest: { type: Schema.Types.ObjectId },
+      user: { type: Schema.Types.ObjectId, ref: "User" },
       items: [
         {
-          productId: { type: Types.ObjectId, ref: "Product", required: true },
+          product: { type: Types.ObjectId, ref: "Product", required: true },
           quantity: { type: Number, required: true, min: 1 },
           status: {
             type: String,
             enum: ["Pendiente", "En Preparacion", "Listo", "Cancelado", "Entregado"],
             default: "Pendiente",
           },
+          comment: { type: String },
         },
       ],
       status: { type: String, enum: ["Sin Pagar", "Pagado", "Pendiente"], default: "Sin Pagar" },

@@ -1,4 +1,4 @@
-import { OrderDocument, OrderInterface, OrderItemDocument, OrderItemInterface } from "../interfaces/OrderInterface";
+import { OrderDocument, OrderInterface, OrderItemInterface, OrderItemDocument } from "../interfaces/OrderInterface";
 import { OrderRepository } from "../repositories/OrderRepository";
 import { Session } from "./Session";
 import { Table } from "./Table";
@@ -8,10 +8,10 @@ import { GuestInterface } from "../interfaces/GuestInterface";
 
 export class Order implements OrderInterface {
     public orderId?: string;
-    public sessionId: Session;
-    public tableId: Table;
-    public guestId: GuestInterface; // Usamos GuestInterface directamente
-    public userId: User;
+    public session: Session;
+    public table: Table;
+    public guest: GuestInterface;
+    public user: User;
     public items: OrderItemInterface[];
     public status: 'Sin Pagar' | 'Pagado' | 'Pendiente';
     public createdAt?: Date;
@@ -20,49 +20,105 @@ export class Order implements OrderInterface {
 
     constructor(order: Partial<OrderInterface>) {
         this.orderId = order.orderId?.toString();
-        this.sessionId = new Session({ sessionId: order.sessionId?.toString() || '' });
-        this.tableId = new Table({ tableId: order.tableId?.toString() || '' });
-        this.guestId = order.guestId || { name: '', orders: [] }; // Asignar GuestInterface vacío si no está definido
-        this.userId = new User({ userId: order.userId?.toString() || '' });
-        this.items = order.items || [];
         this.status = order.status || 'Sin Pagar';
+        this.guest = order.guest || { name: '', orders: [] };
+        this.items = order.items || [];
+        this.createdAt = order.createdAt;
+        this.updatedAt = order.updatedAt;
         this.orderRepository = new OrderRepository();
+
+        // Sanitiza los datos iniciales
+        this.sanitizeData(order);
     }
 
-    // Método para poblar la orden con instancias completas de sus objetos relacionados
-    private async populateOrder(orderDoc: OrderDocument): Promise<void> {
-        this.orderId = orderDoc.id;
-    
-        // Cargar instancias completas de Session, Table y User solo si los valores están definidos
-        this.sessionId = orderDoc.sessionId ? await new Session({ sessionId: orderDoc.sessionId.toString() }).findById() : null;
-        this.tableId = orderDoc.tableId ? await new Table({ tableId: orderDoc.tableId.toString() }).findById() : null;
-        this.userId = orderDoc.userId ? await new User({ userId: orderDoc.userId.toString() }).findById() : null;
-    
-        // Mapear items a objetos de tipo OrderItemInterface con instancias de Product
-        this.items = await Promise.all(orderDoc.items.map(async (item: OrderItemDocument) => ({
-            itemId: item.id,
-            productId: item.productId ? await new Product({ productId: item.productId.toString() }).findById() : null,
+    /**
+     * Método para sanear y crear instancias mínimas de los datos relacionados.
+     */
+    private sanitizeData(order: Partial<OrderInterface>) {
+        // Crear una instancia de `Session` con solo el ID si `sessionId` es un string
+        this.session = order.session instanceof Session 
+            ? order.session 
+            : new Session({ sessionId: order.session || '' });
+
+        // Crear una instancia de `Table` con solo el ID si `tableId` es un string
+        this.table = order.table instanceof Table 
+            ? order.table 
+            : new Table({ tableId: order.table || '' });
+
+        // Crear una instancia de `User` con solo el ID si `userId` es un string
+        this.user = order.user instanceof User 
+            ? order.user 
+            : new User({ userId: order.user || '' });
+
+        // Si guestId.user es un string, crear una instancia mínima de User para guestId.user
+        if (this.guest.user && typeof this.guest.user === 'string') {
+            this.guest.user = new User({ userId: this.guest.user });
+        }
+
+        // Para cada `item`, crear una instancia de `Product` con solo el ID si `productId` es un string
+        this.items = (order.items || []).map(item => ({
+            product: item.product instanceof Product 
+                ? item.product 
+                : new Product({ productId: item.product }),
             quantity: item.quantity,
             status: item.status,
             comment: item.comment
-        }))) as OrderItemInterface[];
-    
-        this.status = orderDoc.status;
+        }));
+    }
 
-        // Asignar directamente guestId conforme a GuestInterface sin necesidad de instanciar
-        this.guestId = {
-            guestId: orderDoc.guestId?.toString(),
-            name: orderDoc.guestId?.name || '',
-            user: (orderDoc.guestId && typeof orderDoc.guestId !== 'string') ? orderDoc.guestId.user : undefined,
-            orders: orderDoc.guestId?.orders || []
+    /**
+     * Método populate para cargar los datos completos de los objetos relacionados.
+     */
+    public async populate(): Promise<void> {
+        if (!this.session.table) {
+            this.session = await this.session.findById();
+        }
+
+        if (!this.table.tableNumber) {
+            this.table = await this.table.findById();
+        }
+
+        if (!this.user.name) {
+            this.user = await this.user.findById();
+        }
+
+        // Poblar guestId.user si solo contiene el ID
+        if (this.guest.user instanceof User && !this.guest.user.name) {
+            this.guest.user = await this.guest.user.findById();
+        }
+
+        // Poblar cada productId en items si solo contiene el ID
+        this.items = await Promise.all(
+            this.items.map(async item => {
+                if (!(item.product instanceof Product) || !item.product.name) {
+                    item.product = await (item.product as Product).findById();
+                }
+                return item;
+            })
+        );
+    }
+
+    public async save(): Promise<Order> {
+        // Verificar si los items existen
+        const items = this.items.map(item => ({
+            product: item.product instanceof Product
+                ? item.product.productId
+                : item.product,
+            quantity: item.quantity,
+            status: item.status || 'Pendiente',
+            comment: item.comment || ''
+        }));
+        
+        const DataToSave = {
+            session: this.session,
+            table: this.table,
+            user: this.user,
+            guest: this.guest,
+            items,
+            status: this.status
         };
 
-        this.createdAt = orderDoc.createdAt;
-        this.updatedAt = orderDoc.updatedAt;
-    }
-    
-    public async save(): Promise<Order> {
-        const savedOrder = await this.orderRepository.save(this);
+        const savedOrder = await this.orderRepository.save(DataToSave);
         await this.populateOrder(savedOrder);
         return this;
     }
@@ -73,6 +129,7 @@ export class Order implements OrderInterface {
         return Promise.all(orders.map(async (orderDoc) => {
             const order = new Order({});
             await order.populateOrder(orderDoc);
+            await order.populate();
             return order;
         }));
     }
@@ -84,6 +141,7 @@ export class Order implements OrderInterface {
             return await Promise.all(orders.map(async (orderDoc) => {
                 const order = new Order({});
                 await order.populateOrder(orderDoc);
+                await order.populate();
                 return order;
             }));
         }
@@ -112,6 +170,7 @@ export class Order implements OrderInterface {
         const orderDoc = await this.orderRepository.findById(this.orderId);
         if (orderDoc) {
             await this.populateOrder(orderDoc);
+            await this.populate();
             return this;
         }
         return null;
@@ -119,15 +178,17 @@ export class Order implements OrderInterface {
 
     public async findForKitchen(): Promise<Order[]> {
         const orders = await this.orderRepository.findForKitchen();
+        console.log('Kitchen Data',orders);
         return Promise.all(orders.map(async (orderDoc) => {
             const order = new Order({});
             await order.populateOrder(orderDoc);
+            await order.populate();
             return order;
         }));
     }
 
     public async findByUserId(): Promise<Order[]> {
-        const orders = await this.orderRepository.findByUserId(this.userId.userId);	
+        const orders = await this.orderRepository.findByUserId(this.user.userId);	
         if (orders) {
             return Promise.all(orders.map(async (orderDoc) => {
                 const order = new Order({});
@@ -139,7 +200,39 @@ export class Order implements OrderInterface {
     }
 
     public async updateGuestToUserOrders(): Promise<boolean> {
-        const updated = await this.orderRepository.updateGuestToUserOrders(this.guestId.guestId, this.userId.userId);
+        const updated = await this.orderRepository.updateGuestToUserOrders(this.guest.guestId, this.user.userId);
         return updated ? true : false;
+    }
+
+    /**
+     * Popula los datos de un documento de orden.
+     */
+    private async populateOrder(orderDoc: OrderDocument): Promise<void> {
+        this.orderId = orderDoc.id;
+        this.session = new Session({ sessionId: orderDoc.session.toString() });
+        this.table = new Table({ tableId: orderDoc.table.toString() });
+        this.user = new User({ userId: orderDoc.user.toString() });
+        this.status = orderDoc.status;
+        
+        this.items = orderDoc.items.map((item: OrderItemDocument) => ({
+            itemId: item._id.toString(),
+            product: new Product({ productId: item.product.toString() }),
+            quantity: item.quantity,
+            status: item.status,
+            comment: item.comment
+        }));
+
+        this.createdAt = orderDoc.createdAt;
+        this.updatedAt = orderDoc.updatedAt;
+
+        // Configurar guestId incluyendo user como una instancia de User si no está ya poblado
+        this.guest = {
+            guestId: orderDoc.guest?.toString(),
+            name: orderDoc.guest?.name || '',
+            user: typeof orderDoc.guest?.user === 'string'
+                ? new User({ userId: orderDoc.guest.user })
+                : orderDoc.guest?.user,
+            orders: orderDoc.guest?.orders || []
+        };
     }
 }

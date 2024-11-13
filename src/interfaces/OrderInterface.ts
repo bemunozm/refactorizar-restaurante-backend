@@ -8,10 +8,10 @@ import { GuestDocument, GuestInterface } from "./GuestInterface";
 
 export interface OrderInterface {
   orderId?: string;
-  sessionId:  Session | string;
-  tableId: Table | string;
-  guestId: GuestInterface;
-  userId: User | string;
+  session:  Session | string;
+  table: Table | string;
+  guest: GuestInterface ;
+  user: User | string;
   items: OrderItemInterface[];
   status: 'Sin Pagar' | 'Pagado' | 'Pendiente';
   createdAt?: Date;
@@ -20,7 +20,7 @@ export interface OrderInterface {
 
 export interface OrderItemInterface {
   itemId?: string;
-  productId: Product | string;
+  product: Product | string;
   quantity: number;
   status: 'Pendiente'| 'En Preparacion' | 'Listo' | 'Cancelado' | 'Entregado';
   comment?: string;

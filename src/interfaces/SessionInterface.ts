@@ -5,8 +5,8 @@ import { Table } from "../models/Table";
 
 export interface SessionInterface {
   sessionId?: string;
-  tableId: Table | string;
-  guests: GuestInterface[];
+  table: Table | string;
+  guests: GuestInterface[] ;
   status: 'Activa' | 'Pagando' | 'Finalizada';
 }
 

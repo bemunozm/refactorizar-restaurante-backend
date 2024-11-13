@@ -8,11 +8,10 @@ import { generateJWT } from "../utils/jwt";
 
 export class SessionService {
     public async createSession(tableId: string) {
-        const sessionInstance = new Session({ tableId, guests: [], status: 'Activa' });
+        const sessionInstance = new Session({ table:tableId , guests: [], status: 'Activa' });
         const existingSession = await sessionInstance.findActiveSessionByTableId();
-
         if (existingSession) throw new Error("Ya existe una sesión activa para esta mesa.");
-
+        console.log(sessionInstance);
         await sessionInstance.save();
         const newSessionToken = new Token({ session: sessionInstance, token: generateToken() });
         await newSessionToken.save();
@@ -25,7 +24,7 @@ export class SessionService {
     }
 
     public async getSessionById(id: string) {
-        const session = new Session({ sessionId: id, tableId: '', guests: [], status: 'Activa' });
+        const session = new Session({ sessionId: id, table: '', guests: [], status: 'Activa' });
         const sessionExists = await session.findById();
 
         if (!sessionExists) throw new Error("Session not found");
@@ -34,7 +33,7 @@ export class SessionService {
     }
 
     public async getSessionByTableId(tableId: string) {
-        const session = new Session({ sessionId: '', tableId: tableId, guests: [], status: 'Activa' });
+        const session = new Session({ sessionId: '', table: tableId, guests: [], status: 'Activa' });
         const sessionExists = await session.findActiveSessionByTableId();
         console.log(sessionExists);
         if (!sessionExists) throw new Error("Session not found");
@@ -52,12 +51,12 @@ export class SessionService {
     }
 
     public async deleteSession(id: string) {
-        const session = new Session({ sessionId: id, tableId: '', guests: [], status: 'Activa' });
+        const session = new Session({ sessionId: id, table: '', guests: [], status: 'Activa' });
         return await session.deleteSession();
     }
 
     public async addGuestToSession(sessionId: string, guestName: string, userId?: string) {
-        const session = new Session({ sessionId: sessionId, tableId: '', guests: [], status: 'Activa' });
+        const session = new Session({ sessionId: sessionId, table: '', guests: [], status: 'Activa' });
         const sessionData = await session.findById();
         if (!sessionData) throw new Error("Session not found");
 
@@ -82,7 +81,7 @@ export class SessionService {
 
     public async transferGuestOrdersToUser(guestId: string, userId: string) {
         //Actualizar los pedidos del invitado para que pertenezcan al usuario
-        const order = new Order({ guestId: { guestId: guestId.toString(), name: '', orders: [] }, sessionId: '', tableId: '', userId: userId, items: [], status: "Sin Pagar" });
+        const order = new Order({ guest: { guestId: guestId.toString(), name: '', orders: [] }, session: '', table: '', user: userId, items: [], status: "Sin Pagar" });
 
         //Actualizar los pedidos de invitado a usuario
         const updatedOrders = await order.updateGuestToUserOrders();
@@ -97,7 +96,7 @@ export class SessionService {
     }
 
     public async checkSessionExists(tableId: string) {
-        const sessionInstance = new Session({ tableId, guests: [], status: 'Activa' });
+        const sessionInstance = new Session({ table:tableId , guests: [], status: 'Activa' });
         const existingSession = await sessionInstance.findActiveSessionByTableId();
 
         return existingSession;

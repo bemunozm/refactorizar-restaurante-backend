@@ -8,7 +8,7 @@ export class TransbankService {
     public async createTransaction(data: { amount: number; sessionId: string; orders: string[] }) {
         const { amount, sessionId, orders } = data;
         console.log(data);
-        const transaction = new Transaction({ token: '', sessionId, orders, amount });
+        const transaction = new Transaction({ token: '', session: sessionId, orders, amount });
         await transaction.save();
 
         const transactionId = transaction.transactionId;
@@ -46,15 +46,15 @@ export class TransbankService {
 
         //Actualizar estado de las ordenes
         for (const order of transaction.orders) {
-            const orderInstance = await new Order({ orderId: order }).findById();
+            const orderInstance = await new Order({ orderId: order.orderId }).findById();
             if (!order) throw new Error('Orden no encontrada');
             await orderInstance.updateOrderStatus('Pagado');
         }
 
-        const sessionOrders = await Order.findBySessionId(transaction.sessionId);
+        const sessionOrders = await Order.findBySessionId(transaction.session.sessionId);
         const allOrdersPaid = sessionOrders.every((order) => order.status === 'Pagado');
 
-        const session = new Session({ sessionId: transaction.sessionId });
+        const session = new Session({ sessionId: transaction.session.sessionId });
         if (allOrdersPaid) {
             await session.updateStatus('Finalizada');
         } else {
@@ -71,7 +71,7 @@ export class TransbankService {
         if (!transaction) throw new Error('Transacción no encontrada');
 
         if (status === 'ANULADA') {
-            const session = new Session({ sessionId: transaction.sessionId });
+            const session = new Session({ sessionId: transaction.session.sessionId });
             await session.updateStatus('Activa');
         }
 

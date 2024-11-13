@@ -21,7 +21,7 @@ class SessionRoute {
             //AuthMiddleware.authenticate,
             //PermissionMiddleware.checkPermission("CREATE_SESSION"),
             [
-                body("tableId").isMongoId().withMessage("ID de mesa inválido."),
+                //body("tableId").isMongoId().withMessage("ID de mesa inválido."),
                 ValidationMiddleware.handleInputErrors
             ],
             this.sessionController.createSession.bind(this.sessionController)

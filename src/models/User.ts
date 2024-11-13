@@ -117,7 +117,7 @@ export class User implements UserInterface {
   //Guardar en la base de datos
   public async save() {
     const savedUser = await this.userRepository.save(this);
-    this.userId = savedUser.userId; // Actualiza el userId con el ID generado por Mongoose
+    this.userId = savedUser.id; // Actualiza el userId con el ID generado por Mongoose
     return this // Devuelve el objeto actualizado
   }
 }

@@ -1,66 +1,79 @@
 import { SessionDocument, SessionInterface } from "../interfaces/SessionInterface";
 import { GuestDocument, GuestInterface } from "../interfaces/GuestInterface";
-import { OrderDocument, OrderItemInterface } from "../interfaces/OrderInterface";
+import { OrderDocument } from "../interfaces/OrderInterface";
 import { SessionRepository } from "../repositories/SessionRepository";
-import { Product } from "./Product";
 import { Table } from "./Table";
 import { User } from "./User";
+import { Order } from "./Order";
 
 export class Session implements SessionInterface {
     public sessionId?: string;
-    public tableId: Table;
+    public table: Table;
     public guests: GuestInterface[];
     public status: 'Activa' | 'Pagando' | 'Finalizada';
     private sessionRepository: SessionRepository;
 
     constructor(data: Partial<SessionInterface>) {
         this.sessionId = data.sessionId?.toString();
-        this.tableId = data.tableId instanceof Table ? data.tableId : new Table({ tableId: data.tableId || '' });
-        this.guests = data.guests || [];
         this.status = data.status || 'Activa';
+        this.guests = data.guests || [];
+
+        // Sanitizar datos para asegurar que `table` y `guests` sean instancias correctas
+        this.sanitizeData(data);
+
         this.sessionRepository = new SessionRepository();
     }
 
-    private async populateOrderItems(items: OrderItemInterface[]): Promise<OrderItemInterface[]> {
-        return Promise.all(items.map(async (item) => {
-            const product = typeof item.productId === 'string' ? await new Product({ productId: item.productId }).findById() : item.productId;
-            return {
-                ...item,
-                productId: product,
-            };
+    /**
+     * Método para sanear y crear instancias mínimas de los datos relacionados.
+     */
+    private sanitizeData(data: Partial<SessionInterface>) {
+        // Crear una instancia mínima de `Table` si `table` es un string
+        this.table = data.table instanceof Table 
+            ? data.table 
+            : new Table({ tableId: data.table?.toString() || '' });
+
+        // Verificar si `guests` contiene objetos completos y ajustar si es necesario
+        this.guests = (data.guests || []).map(guest => ({
+            ...guest,
+            user: typeof guest.user === 'string' ? new User({ userId: guest.user }) : guest.user,
         }));
     }
 
+    /**
+     * Método para poblar los datos completos de los `guests`, asumiendo que `orders` ya contiene objetos completos.
+     */
     private async populateGuests(guests: GuestDocument[]): Promise<GuestInterface[]> {
         return Promise.all(guests.map(async (guest: GuestDocument) => ({
             guestId: guest.id.toString(),
             name: guest.name,
-            user: typeof guest.user === 'string' ? await new User({ userId: guest.user }).findById() : guest.user,
-            orders: await Promise.all(guest.orders.map(async (order: OrderDocument) => ({
-                orderId: order.id.toString(),
-                sessionId: typeof order.sessionId === 'string' ? await new Session({ sessionId: order.sessionId }).findById() : order.sessionId,
-                tableId: typeof order.tableId === 'string' ? await new Table({ tableId: order.tableId }).findById() : order.tableId,
-                guestId: order.guestId,
-                userId: typeof order.userId === 'string' ? await new User({ userId: order.userId }).findById() : order.userId,
-                items: await this.populateOrderItems(order.items),
-                status: order.status,
-            }))),
+            user: typeof guest.user === 'string' 
+                ? await new User({ userId: guest.user }).findById()
+                : guest.user,
+    
+            // Crear instancias completas de Order
+            orders: await Promise.all(guest.orders.map(async (orderData: OrderDocument) => {
+                const order = new Order({ orderId: orderData.id });
+                await order.populate(); // Llenar la instancia completa
+                return order;
+            })),
         })));
     }
+    
 
     public async findActiveSessionByTableId(): Promise<Session | null> {
         try {
-            const sessionDoc = await this.sessionRepository.findActiveSessionByTableId(this.tableId.tableId);
+            const sessionDoc = await this.sessionRepository.findActiveSessionByTableId(this.table.tableId);
             if (sessionDoc) {
                 this.sessionId = sessionDoc.id;
-                this.tableId = await new Table({ tableId: sessionDoc.tableId.toString() }).findById();
+                this.table = await new Table({ tableId: sessionDoc.table.toString() }).findById();
                 this.guests = await this.populateGuests(sessionDoc.guests as GuestDocument[]);
                 this.status = sessionDoc.status;
                 return this;
             }
             return null;
         } catch (error) {
-            console.error(`Error encontrando sesión activa para la mesa con ID: ${this.tableId}`, error);
+            console.error(`Error encontrando sesión activa para la mesa con ID: ${this.table.tableId}`, error);
             return null;
         }
     }
@@ -70,7 +83,7 @@ export class Session implements SessionInterface {
             const session = await this.sessionRepository.findBySessionId(this.sessionId);
             if (session) {
                 this.sessionId = session.id.toString();
-                this.tableId = await new Table({ tableId: session.tableId.toString() }).findById();
+                this.table = await new Table({ tableId: session.table.toString() }).findById();
                 this.guests = await this.populateGuests(session.guests as GuestDocument[]);
                 this.status = session.status;
                 return this;
@@ -131,7 +144,7 @@ export class Session implements SessionInterface {
                 return Promise.all(sessions.map(async (session: SessionDocument) => {
                     const sessionInstance = new Session({
                         sessionId: session.id,
-                        tableId: await new Table({ tableId: session.tableId.toString() }).findById(),
+                        table: await new Table({ tableId: session.table.toString() }).findById(),
                         guests: [],
                         status: session.status
                     });
@@ -163,7 +176,7 @@ export class Session implements SessionInterface {
     public async save(): Promise<Session> {
         const savedSession = await this.sessionRepository.save(this);
         this.sessionId = savedSession.id;
-        this.tableId = await new Table({ tableId: savedSession.tableId.toString() }).findById();
+        this.table = await new Table({ tableId: savedSession.table.toString() }).findById();
         this.guests = await this.populateGuests(savedSession.guests as GuestDocument[]);
         return this;
     }

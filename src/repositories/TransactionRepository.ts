@@ -14,7 +14,7 @@ export class TransactionRepository extends GenericRepository<TransactionDocument
         const transactionDocument = new TransactionModel({
             token: transaction.token,
             orders: transaction.orders,
-            sessionId: transaction.sessionId,
+            session: transaction.session,
             amount: transaction.amount,
             status: transaction.status,
         });

@@ -25,8 +25,8 @@ export class TokenRepository extends GenericRepository<TokenDocument> {
     try {
       const tokenDocument = new this.model({
         token: token.token,
-        user: token.user,
-        session: token.session.sessionId,
+        user: token.user ? token.user.userId : undefined,
+        session: token.session ? token.session.sessionId : undefined,
       });
       return await tokenDocument.save();
     } catch (error) {

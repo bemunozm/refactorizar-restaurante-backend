@@ -6,10 +6,10 @@ export const ProductSchema = new Schema<ProductDocument>({
     price: { type: Number, required: true, trim: true },
     image: { type: String, required: false, trim: true },
     about: { type: String, required: true, trim: true },
-    categoryId: { type: Schema.Types.ObjectId, ref: "Category", required: true, index: true },
+    category: { type: Schema.Types.ObjectId, ref: "Category", required: true, index: true },
     ingredients: [
         {
-            ingredientId: { type: Types.ObjectId, ref: "Ingredient", required: true },
+            ingredient: { type: Types.ObjectId, ref: "Ingredient", required: true },
             quantityRequired: { type: Number, required: true, min: 0 },
         }
     ],

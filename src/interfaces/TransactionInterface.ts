@@ -8,8 +8,8 @@ import { Order } from "../models/Order";
 export interface TransactionInterface {
     transactionId?: string;
     token: string;
-    orders: string[];
-    sessionId: string;
+    orders: Order[] | string[];
+    session: Session | string;
     amount: number;
     status: 'CREADA' | 'CONFIRMADA' | 'ANULADA';
 }

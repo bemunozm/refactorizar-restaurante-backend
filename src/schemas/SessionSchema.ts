@@ -4,7 +4,7 @@ import { SessionDocument } from "../interfaces/SessionInterface";
 
 export const SessionSchema = new Schema<SessionDocument>(
   {
-    tableId: { type: Schema.Types.ObjectId, ref: "Table", required: true },
+    table: { type: Schema.Types.ObjectId, ref: "Table", required: true },
     guests: [GuestSchema],
     status: {
       type: String,

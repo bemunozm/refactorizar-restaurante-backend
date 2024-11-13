@@ -9,10 +9,12 @@ export class ProductService {
             name: data.name,
             price: parseInt(data.price),
             about: data.about,
-            categoryId: await new Category({ categoryId: data.categoryId }).findById(),
+            category: await new Category({ categoryId: data.categoryId }).findById(),
             ingredients: data.ingredients,
             image: file ? `/uploads/images/${file.filename}` : undefined
         };
+
+        console.log(productData.ingredients);
 
         const product = new Product(productData);
         return await product.save();
@@ -27,14 +29,15 @@ export class ProductService {
         return await product.findById();
     }
 
-    public async updateProduct(id: string, updateData: any, file?: Express.Multer.File) {
+    public async updateProduct(id: string, updateData: Product, file?: Express.Multer.File) {
         if (updateData.price) {
-            updateData.price = parseInt(updateData.price);
+            updateData.price = +updateData.price;
         }
 
         if (file) {
             updateData.image = `/uploads/images/${file.filename}`;
         }
+
 
         const product = new Product({ productId: id });
         return await product.update(updateData);
@@ -54,7 +57,7 @@ export class ProductService {
             throw new Error("Category not found");
         }
 
-        return await Product.findByCategoryId(existingCategory.categoryId);
+        return await Product.findByCategoryId(category.categoryId);
 
     }
 }

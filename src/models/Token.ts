@@ -13,19 +13,44 @@ export class Token implements TokenInterface {
     constructor(data: Partial<TokenInterface>) {
         this.tokenId = data.tokenId;
         this.token = data.token || '';
-        this.user = data.user instanceof User ? data.user : data.user ? new User({ userId: data.user }) : undefined;
-        this.session = data.session instanceof Session ? data.session : data.session ? new Session({ sessionId: data.session }) : undefined;
+        
+        // Sanitiza los datos iniciales para asegurar instancias mínimas de User y Session
+        this.sanitizeData(data);
+
         this.tokenRepository = new TokenRepository();
     }
 
-    // Cargar una instancia de User si es necesario
+    /**
+     * Método para sanear y crear instancias mínimas de los datos relacionados.
+     */
+    private sanitizeData(data: Partial<TokenInterface>) {
+        // Crear una instancia mínima de `User` si `user` es un string
+        this.user = data.user instanceof User 
+            ? data.user 
+            : data.user 
+                ? new User({ userId: data.user.toString() }) 
+                : undefined;
+
+        // Crear una instancia mínima de `Session` si `session` es un string
+        this.session = data.session instanceof Session 
+            ? data.session 
+            : data.session 
+                ? new Session({ sessionId: data.session.toString() }) 
+                : undefined;
+    }
+
+    /**
+     * Cargar una instancia de `User` completa si es necesario.
+     */
     private async populateUser(userId: string): Promise<User | undefined> {
         if (this.user && this.user.userId === userId) return this.user;
         const userInstance = new User({ userId });
         return await userInstance.findById();
     }
 
-    // Cargar una instancia de Session si es necesario
+    /**
+     * Cargar una instancia de `Session` completa si es necesario.
+     */
     private async populateSession(sessionId: string): Promise<Session | undefined> {
         if (this.session && this.session.sessionId === sessionId) return this.session;
         const sessionInstance = new Session({ sessionId });
