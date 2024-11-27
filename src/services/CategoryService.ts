@@ -10,7 +10,7 @@ export class CategoryService {
         };
 
         const category = new Category(categoryData);
-        await category.save();
+        return await category.save();
     }
 
     public async getCategories() {
@@ -32,26 +32,18 @@ export class CategoryService {
     }
 
     public async deleteCategory(id: string) {
-        //Instanciar objeto Category con el id de la categoría
         const category = new Category({ categoryId: id });
 
-        //Buscar la categoría por ID
         await category.findById();
-
-        //Si la categoría no existe, retornar null
         if (!category.categoryId) {
-            return new Error('Categoría no encontrada');
+            throw new Error('Categoría no encontrada');
         }
 
-        //Verificar si la categoría tiene productos asociados
         const products = await Product.findByCategoryId(category.categoryId);
-
-        //Si la categoría tiene productos asociados, retornar null
         if (products.length > 0) {
-            return new Error('No se puede eliminar la categoría porque tiene productos asociados');
+            throw new Error('No se puede eliminar la categoría porque tiene productos asociados');
         }
-        
-        //Eliminar la categoría
+
         return await category.delete();
     }
 }

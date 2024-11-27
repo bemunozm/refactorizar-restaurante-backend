@@ -2,7 +2,7 @@ import { Ingredient } from "../models/Ingredient";
 import { IngredientInterface } from "../interfaces/IngredientInterface";
 
 export class IngredientService {
-    public async createIngredient(data: Partial<IngredientInterface>, file: Express.Multer.File) {
+    public async createIngredient(data: Partial<IngredientInterface>, file?: Express.Multer.File) {
         const ingredientData: IngredientInterface = {
             name: data.name,
             stockQuantity: data.stockQuantity,
@@ -11,11 +11,10 @@ export class IngredientService {
         };
 
         const ingredient = new Ingredient(ingredientData);
-        await ingredient.save();
+        return await ingredient.save();
     }
 
     public async updateIngredient(id: string, updateData: Partial<IngredientInterface>, file?: Express.Multer.File) {
-        console.log
         if (file) {
             updateData.image = `/uploads/images/${file.filename}`;
         }

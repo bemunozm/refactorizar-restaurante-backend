@@ -80,6 +80,7 @@ export class OrderController {
 
         try {
             const orders = await this.orderService.getOrdersByUserId(userId);
+            console.log('Orders', orders);
             return res.status(200).json(orders);
         } catch (error) {
             console.error(error);

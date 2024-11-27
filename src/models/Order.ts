@@ -78,7 +78,7 @@ export class Order implements OrderInterface {
             this.table = await this.table.findById();
         }
 
-        if (!this.user.name) {
+        if (!this.user.name && this.user.userId) {
             this.user = await this.user.findById();
         }
 
@@ -159,6 +159,7 @@ export class Order implements OrderInterface {
 
     public async updateOrderStatus(status: 'Sin Pagar' | 'Pagado' | 'Pendiente'): Promise<Order | null> {
         const updatedOrder = await this.orderRepository.update(this.orderId, { status });
+        console.log('Updated Order',updatedOrder);
         if (updatedOrder) {
             await this.populateOrder(updatedOrder);
             return this;
@@ -187,12 +188,14 @@ export class Order implements OrderInterface {
         }));
     }
 
-    public async findByUserId(): Promise<Order[]> {
-        const orders = await this.orderRepository.findByUserId(this.user.userId);	
+    static async findByUserId(userId: string): Promise<Order[]> {
+        const orderRepository = new OrderRepository();
+        const orders = await orderRepository.findByUserId(userId);	
         if (orders) {
             return Promise.all(orders.map(async (orderDoc) => {
                 const order = new Order({});
                 await order.populateOrder(orderDoc);
+                await order.populate();
                 return order;
             }));
         }
@@ -211,7 +214,7 @@ export class Order implements OrderInterface {
         this.orderId = orderDoc.id;
         this.session = new Session({ sessionId: orderDoc.session.toString() });
         this.table = new Table({ tableId: orderDoc.table.toString() });
-        this.user = new User({ userId: orderDoc.user.toString() });
+        this.user = orderDoc.user ? new User({ userId: orderDoc.user.toString() }) : new User({});
         this.status = orderDoc.status;
         
         this.items = orderDoc.items.map((item: OrderItemDocument) => ({

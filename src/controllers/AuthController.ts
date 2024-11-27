@@ -26,9 +26,8 @@ export class AuthController {
 
     public async login(req: Request, res: Response): Promise<Response> {
         try {
-            const { email, password, sessionId, tableId, guestId } = req.body;
-            console.log(req.body);
-            const token = await this.authService.login(email, password, guestId, sessionId, tableId);
+            
+            const token = await this.authService.login(req.body);
             return res.json(token);
         } catch (error) {
             return res.status(401).json({ error: error.message });
@@ -155,6 +154,15 @@ export class AuthController {
                 table: req.tableId || '',
                 role: req.role || ''
             })
+        } catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
+    }
+
+    public async updatePassword(req: Request, res: Response) {
+        try {
+            await this.authService.updatePassword(req.body, req.user.userId);
+            return res.json({ message: "Contraseña actualizada correctamente" });
         } catch (error) {
             return res.status(500).json({ error: error.message });
         }

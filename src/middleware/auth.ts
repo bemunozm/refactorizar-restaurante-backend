@@ -39,8 +39,11 @@ class AuthMiddleware {
             const session = new Session({ sessionId: decoded.sessionId });
             await session.findById();
 
-            const table = new Table({ tableId: decoded.tableId });
-            await table.findById();
+            let table;
+            if (decoded.tableId !== ''){
+                table = new Table({ tableId: decoded.tableId });
+                await table.findById();
+            }
             
             // Asigna sessionId y tableId desde el token decodificado, si existen
             req.sessionId = session || undefined;

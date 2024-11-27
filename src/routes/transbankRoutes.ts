@@ -54,6 +54,17 @@ class TransbankRoute {
             ],
             this.transbankController.updateTransactionStatus.bind(this.transbankController)
         );
+
+        this.router.post(
+            "/notifyWaitersWithToken",
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("UPDATE_TRANSACTION_STATUS"),
+            [
+                
+                ValidationMiddleware.handleInputErrors
+            ],
+            this.transbankController.notifyWaitersWithToken.bind(this.transbankController)
+        );
     }
 }
 

@@ -42,4 +42,15 @@ export class TransbankController {
             return res.status(500).json({ error: 'Error actualizando la transacción' });
         }
     }
+
+    public async notifyWaitersWithToken(req: Request, res: Response): Promise<Response> {
+        try {
+            const { token, status } = req.body;
+            const response = await this.transbankService.notifyWaitersWithToken({ token, status });
+            return res.status(200).json(response);
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ error: 'Error notificando a los garzones' });
+        }
+    }
 }

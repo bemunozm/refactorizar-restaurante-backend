@@ -10,7 +10,6 @@ export class CategoryRepository extends GenericRepository<CategoryDocument> {
         super(CategoryRepository.mongooseModel);
     }
 
-
     public async save(category: CategoryInterface) {
         const categoryDocument = new this.model({
             name: category.name,
@@ -18,5 +17,4 @@ export class CategoryRepository extends GenericRepository<CategoryDocument> {
         });
         return await categoryDocument.save();
     }
-
 }

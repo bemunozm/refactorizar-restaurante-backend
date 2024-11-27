@@ -21,7 +21,7 @@ export class Role implements RoleInterface {
     }
 
     public async save() {
-        const savedRole = await this.roleRepository.save(this);
+        const savedRole = await this.roleRepository.save(this.toDatabaseObject());
         this.populateRole(savedRole);
         return this;
     }
@@ -65,11 +65,18 @@ export class Role implements RoleInterface {
     }
 
     public async findByName() {
-        const roleData = await this.roleRepository.findOne({name: this.name});
+        const roleData = await this.roleRepository.findOne({ name: this.name });
         if (roleData) {
             this.populateRole(roleData);
             return this;
         }
         return null;
+    }
+
+    private toDatabaseObject() {
+        return {
+            name: this.name,
+            permissions: this.permissions,
+        };
     }
 }
