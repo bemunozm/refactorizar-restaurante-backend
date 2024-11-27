@@ -18,8 +18,8 @@ export class OrderRepository extends GenericRepository<OrderDocument> {
 public async updateGuestToUserOrders(guestId: string, userId: string) {
     try {
         return await this.model.updateMany(
-            { guestId },
-            { $set: { userId }, $unset: { guestId: 1 } }
+            { guest: guestId },
+            { $set: { user: userId }, $unset: {guest: 1 } }
         ).exec();
     } catch (error) {
         console.error(`Error al actualizar los estados de las ordenes: ${error}`);
@@ -56,13 +56,13 @@ public async updateGuestToUserOrders(guestId: string, userId: string) {
     }
 
     public async findForKitchen() {
-        const activeSessions = await SessionModel.find({ status: 'Activa' }).select('_id');
-        return await this.model.find({ session: { $in: activeSessions } })
-            .sort({ createdAt: 1 });
+      const activeSessions = await SessionModel.find({ status: { $ne: 'Finalizada' } }).select('_id');
+      return await this.model.find({ session: { $in: activeSessions } })
+        .sort({ createdAt: 1 });
     }
 
     public async findByUserId(userId: string) {
-        return await this.model.find({ userId })
+        return await this.model.find({ user: userId });
             
     }
 

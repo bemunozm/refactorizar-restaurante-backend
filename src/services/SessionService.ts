@@ -1,18 +1,24 @@
+// SessionService.ts
 import { Session } from "../models/Session";
 import { Token } from "../models/Token";
 import { Order } from "../models/Order";
 import { User } from "../models/User";
 import { generateToken } from "../utils/token";
 import { generateJWT } from "../utils/jwt";
-
+import { Table } from "../models/Table";
 
 export class SessionService {
     public async createSession(tableId: string) {
-        const sessionInstance = new Session({ table:tableId , guests: [], status: 'Activa' });
+        const sessionInstance = new Session({ table: new Table({ tableId }), guests: [], status: 'Activa' });
         const existingSession = await sessionInstance.findActiveSessionByTableId();
         if (existingSession) throw new Error("Ya existe una sesión activa para esta mesa.");
-        console.log(sessionInstance);
+        
         await sessionInstance.save();
+
+        //Actualiza el estado de la mesa
+        const table = new Table({ tableId });
+        await table.update({ status: 'Ocupada' });
+
         const newSessionToken = new Token({ session: sessionInstance, token: generateToken() });
         await newSessionToken.save();
 
@@ -24,71 +30,47 @@ export class SessionService {
     }
 
     public async getSessionById(id: string) {
-        const session = new Session({ sessionId: id, table: '', guests: [], status: 'Activa' });
-        const sessionExists = await session.findById();
-
-        if (!sessionExists) throw new Error("Session not found");
-
-        return sessionExists;
+        const session = new Session({ sessionId: id });
+        return await session.findById();
     }
 
     public async getSessionByTableId(tableId: string) {
-        const session = new Session({ sessionId: '', table: tableId, guests: [], status: 'Activa' });
-        const sessionExists = await session.findActiveSessionByTableId();
-        console.log(sessionExists);
-        if (!sessionExists) throw new Error("Session not found");
-
-        return sessionExists;
+        const session = new Session({ table: new Table({ tableId }) });
+        return await session.findActiveSessionByTableId();
     }
 
     public async updateSession(id: string, endedAt?: Date) {
-        //Por implementar
-
-        // const session = new Session({ sessionId: id, tableId: '', guests: [], status: 'Activa' });
-        // return await session.update({ endedAt: endedAt ? new Date(endedAt) : new Date() });
-
-        return 'Por implementar';
+        const session = new Session({ sessionId: id });
+        return await session.updateStatus('Finalizada');  // Aquí podríamos ajustar el estado y la hora de finalización
     }
 
     public async deleteSession(id: string) {
-        const session = new Session({ sessionId: id, table: '', guests: [], status: 'Activa' });
+        const session = new Session({ sessionId: id });
         return await session.deleteSession();
     }
 
     public async addGuestToSession(sessionId: string, guestName: string, userId?: string) {
-        const session = new Session({ sessionId: sessionId, table: '', guests: [], status: 'Activa' });
+        const session = new Session({ sessionId: sessionId });
         const sessionData = await session.findById();
         if (!sessionData) throw new Error("Session not found");
-
         if (userId) {
-            const user = await new User({ userId: userId, name: '', lastname: '', email: '', password: '', confirmed: false, roles: []}).findById();
-
+            const user = await new User({ userId }).findById();
             if (!user) throw new Error("User not found");
             
-            //Agregar el usuario a la sesión
-            await session.addGuest({ name: user.name, user:user.userId ,orders: [] });
+            await session.addGuest({ name: user.name, user, orders: [] });
 
             const token = generateJWT({ id: user.userId, sessionId, role: 'Usuario' });
             return { token, sessionId };
         }
-
         const guest = await session.addGuest({ name: guestName, orders: [] });
         const guestToken = generateJWT({ id: guest.guestId, sessionId, role: 'Invitado' });
 
-        console.log(session);
         return { token: guestToken, sessionId };
     }
 
     public async transferGuestOrdersToUser(guestId: string, userId: string) {
-        //Actualizar los pedidos del invitado para que pertenezcan al usuario
-        const order = new Order({ guest: { guestId: guestId.toString(), name: '', orders: [] }, session: '', table: '', user: userId, items: [], status: "Sin Pagar" });
-
-        //Actualizar los pedidos de invitado a usuario
-        const updatedOrders = await order.updateGuestToUserOrders();
-
-        if (!updatedOrders) throw new Error("Error Transfiereindo los pedidos del invitado al usuario");
-
-        return updatedOrders;
+        const order = new Order({ guest: { guestId, name: '', orders: [] }, user: new User({ userId }), status: "Sin Pagar" });
+        return await order.updateGuestToUserOrders();
     }
 
     public async validateToken(token: string) {
@@ -96,13 +78,11 @@ export class SessionService {
     }
 
     public async checkSessionExists(tableId: string) {
-        const sessionInstance = new Session({ table:tableId , guests: [], status: 'Activa' });
-        const existingSession = await sessionInstance.findActiveSessionByTableId();
-
-        return existingSession;
+        const sessionInstance = new Session({ table: new Table({ tableId }), status: 'Activa' });
+        return await sessionInstance.findActiveSessionByTableId();
     }
 
     public async getSessionToken(sessionId: string) {
-        return await new Token({ session: sessionId.toString(), token: '' }).findBySessionId();
+        return await new Token({ session: new Session({ sessionId }) }).findBySessionId();
     }
 }

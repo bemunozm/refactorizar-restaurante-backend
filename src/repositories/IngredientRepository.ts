@@ -10,13 +10,12 @@ export class IngredientRepository extends GenericRepository<IngredientDocument> 
     }
 
     public async save(ingredient: IngredientInterface) {
-        const ingredientDocument = new IngredientModel({
+        const ingredientDocument = new this.model({
             name: ingredient.name,
             stockQuantity: ingredient.stockQuantity,
             unit: ingredient.unit,
-            image: ingredient.image
+            image: ingredient.image,
         });
         return await ingredientDocument.save();
     }
-
 }

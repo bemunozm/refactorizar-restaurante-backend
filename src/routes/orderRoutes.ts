@@ -59,7 +59,7 @@ class OrderRoute {
         this.router.get(
             "/user/:userId",
             AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("VIEW_USER_ORDERS"),
+            //PermissionMiddleware.checkPermission("VIEW_USER_ORDERS"),
             param("userId").isMongoId().withMessage("ID de usuario inválido."),
             ValidationMiddleware.handleInputErrors,
             this.orderController.getOrdersByUserId.bind(this.orderController)

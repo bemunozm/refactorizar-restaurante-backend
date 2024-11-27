@@ -3,6 +3,8 @@ import { Transaction } from '../models/Transaction';
 import { Order } from '../models/Order';
 import { Session } from '../models/Session';
 import { OrderInterface } from '../interfaces/OrderInterface';
+import { SocketService } from './SocketService';
+import { Table } from '../models/Table';
 
 export class TransbankService {
     public async createTransaction(data: { amount: number; sessionId: string; orders: string[] }) {
@@ -53,7 +55,7 @@ export class TransbankService {
 
         const sessionOrders = await Order.findBySessionId(transaction.session.sessionId);
         const allOrdersPaid = sessionOrders.every((order) => order.status === 'Pagado');
-
+        console.log(allOrdersPaid);
         const session = new Session({ sessionId: transaction.session.sessionId });
         if (allOrdersPaid) {
             await session.updateStatus('Finalizada');
@@ -79,4 +81,28 @@ export class TransbankService {
 
         return transaction;
     }
+
+    public async notifyWaitersWithToken({ token, status }: { token: string, status: 'Pago con Tarjeta' | 'Pago en Efectivo' }) {
+
+        const transaction = await new Transaction({ token }).findByToken();
+        const tableId = transaction.session.table.tableId;
+        // Emitir el token de Transbank a los meseros
+        SocketService.to("waiter", "paymentTokenNotification", {
+            token,
+            tableId,
+            status,
+        });
+    
+        // Actualizar el estado de la mesa a "Pago Pendiente"
+        const tableInstance = new Table({ tableId });
+        const table = await tableInstance.findById();
+        if (!table) {
+            throw new Error('Mesa no encontrada');
+        }
+        table.status = status;
+        await table.update({ status });
+    
+        return { message: "Token enviado a los meseros y mesa actualizada" };
+    }
+    
 }

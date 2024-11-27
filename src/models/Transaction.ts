@@ -47,7 +47,7 @@ export class Transaction implements TransactionInterface {
      */
     public async populate(): Promise<void> {
         // Poblar `session` si solo tiene el ID
-        if (!this.session.status) {
+        if (!this.session.table.tableId) {
             this.session = await this.session.findById();
         }
 

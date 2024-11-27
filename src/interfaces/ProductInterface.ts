@@ -11,12 +11,12 @@ export interface ProductInterface {
     price: number;
     about: string;
     image?: string;
-    category: Category | string;
+    category: Category;
     ingredients: ProductIngredientInterface[];
 }
 
 export interface ProductIngredientInterface {
-    ingredient: Ingredient | string;
+    ingredient: Ingredient;
     quantityRequired: number;
 }
 

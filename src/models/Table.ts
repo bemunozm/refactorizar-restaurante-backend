@@ -4,7 +4,7 @@ import { TableInterface } from "../interfaces/TableInterface";
 export class Table implements TableInterface {
     public tableId?: string;
     public tableNumber: number;
-    public status: "Disponible" | "Ocupada" | "Reservada";
+    public status: 'Disponible' | 'Ocupada' | 'Reservada' | 'Solicita Asistencia' | 'Pago en Efectivo' | 'Pago con Tarjeta';;
     private tableRepository: TableRepository;
 
     constructor(data: Partial<TableInterface>) {
@@ -50,7 +50,6 @@ export class Table implements TableInterface {
 
     public async findById() {
         const table = await this.tableRepository.findById(this.tableId);
-
         if (table) {
             this.tableId = table.id;
             this.tableNumber = table.tableNumber;

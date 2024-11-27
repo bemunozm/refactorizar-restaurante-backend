@@ -8,7 +8,7 @@ import { Order } from "../models/Order";
 export interface GuestInterface {
   guestId?: string;
   name: string;
-  user?: string | Types.ObjectId | User;
+  user?: User;
   orders: OrderInterface[]; // Cambiado de Order[] a OrderInterface[]
 }
 

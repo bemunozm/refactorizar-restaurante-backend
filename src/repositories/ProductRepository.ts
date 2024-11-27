@@ -1,6 +1,7 @@
 import ProductModel from "../schemas/ProductSchema";
 import { ProductDocument, ProductInterface } from "../interfaces/ProductInterface";
 import { GenericRepository } from "./GenericRepository";
+import { Ingredient } from "../models/Ingredient";
 
 export class ProductRepository extends GenericRepository<ProductDocument> {
 
@@ -9,6 +10,27 @@ export class ProductRepository extends GenericRepository<ProductDocument> {
     constructor() {
         super(ProductRepository.mongooseModel);
     }
+
+    public update(id: string, data: Partial<ProductDocument>): Promise<ProductDocument> {
+
+        const ingredients = data.ingredients.map(ingredient => ({
+
+            ingredient: ingredient.ingredient instanceof Ingredient ? ingredient.ingredient.ingredientId : ingredient.ingredient,
+            quantityRequired: ingredient.quantityRequired
+        }));
+        
+
+        const updateData = {
+            name: data.name,
+            price: data.price,
+            about: data.about,
+            category: data.category.categoryId,
+            ingredients: ingredients,
+            image: data.image,
+        }
+        return this.model.findByIdAndUpdate(id, updateData, { new: true }).exec();
+    }
+
     public async save(product) {
         
     

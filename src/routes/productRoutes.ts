@@ -74,7 +74,7 @@ class ProductRoute {
         this.router.get(
             "/get-products-by-category/:categoryName",
             AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("VIEW_PRODUCTS"),
+            //PermissionMiddleware.checkPermission("VIEW_PRODUCTS"),
             this.productController.getProductsByCategory.bind(this.productController)
         );
     }

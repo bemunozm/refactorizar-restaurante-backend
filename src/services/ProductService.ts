@@ -1,20 +1,33 @@
+// ProductService.ts
 import { Product } from "../models/Product";
 import { Category } from "../models/Category";
 import { ProductInterface } from "../interfaces/ProductInterface";
+import { Ingredient } from "../models/Ingredient";
 
 export class ProductService {
     public async createProduct(data: any, file?: Express.Multer.File) {
-        console.log(data);
+        const categoryInstance = new Category({ categoryId: data.categoryId });
+        await categoryInstance.findById();
+        if (!categoryInstance) throw new Error('Categoría no encontrada');
+
+        const ingredients = await Promise.all(data.ingredients.map(async (ingredientData: any) => {
+            const ingredientInstance = new Ingredient({ ingredientId: ingredientData.ingredient });
+            await ingredientInstance.findById();
+            if (!ingredientInstance) throw new Error(`Ingrediente no encontrado: ${ingredientData.ingredient}`);
+            return {
+                ingredient: ingredientInstance,
+                quantityRequired: ingredientData.quantityRequired,
+            };
+        }));
+
         const productData: ProductInterface = {
             name: data.name,
             price: parseInt(data.price),
             about: data.about,
-            category: await new Category({ categoryId: data.categoryId }).findById(),
-            ingredients: data.ingredients,
+            category: categoryInstance,
+            ingredients: ingredients,
             image: file ? `/uploads/images/${file.filename}` : undefined
         };
-
-        console.log(productData.ingredients);
 
         const product = new Product(productData);
         return await product.save();
@@ -29,18 +42,23 @@ export class ProductService {
         return await product.findById();
     }
 
-    public async updateProduct(id: string, updateData: Product, file?: Express.Multer.File) {
-        if (updateData.price) {
-            updateData.price = +updateData.price;
-        }
+    public async updateProduct(id: string, updateData: ProductInterface, file?: Express.Multer.File) {
+        if (updateData.price) updateData.price = +updateData.price;
+        if (file) updateData.image = `/uploads/images/${file.filename}`;
+        console.log(updateData);
+        const categoryInstance = updateData.category ? new Category({ categoryId: updateData.category.toString()}) : undefined;
+        if (categoryInstance) await categoryInstance.findById();
 
-        if (file) {
-            updateData.image = `/uploads/images/${file.filename}`;
-        }
-
+        const ingredients = await Promise.all((updateData.ingredients || []).map(async (ingredientData) => {
+            const ingredientInstance = ingredientData.ingredient instanceof Ingredient 
+                ? ingredientData.ingredient 
+                : new Ingredient({ ingredientId: ingredientData.ingredient });
+            await ingredientInstance.findById();
+            return { ingredient: ingredientInstance, quantityRequired: ingredientData.quantityRequired };
+        }));
 
         const product = new Product({ productId: id });
-        return await product.update(updateData);
+        return await product.update({ ...updateData, category: categoryInstance, ingredients });
     }
 
     public async deleteProduct(id: string) {
@@ -50,14 +68,9 @@ export class ProductService {
 
     public async getProductsByCategory(categoryName?: string) {
         const category = new Category({ name: categoryName });
-
         const existingCategory = await category.findByName();
+        if (!existingCategory) throw new Error("Categoría no encontrada");
 
-        if (!existingCategory) {
-            throw new Error("Category not found");
-        }
-
-        return await Product.findByCategoryId(category.categoryId);
-
+        return await Product.findByCategoryId(existingCategory.categoryId);
     }
 }

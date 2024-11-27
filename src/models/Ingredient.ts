@@ -18,6 +18,17 @@ export class Ingredient implements IngredientInterface {
         this.ingredientRepository = new IngredientRepository();
     }
 
+    // Transforma el objeto en un formato adecuado para el repositorio
+    public toDatabaseObject() {
+        return {
+            ingredientId: this.ingredientId,
+            name: this.name,
+            stockQuantity: this.stockQuantity,
+            unit: this.unit,
+            image: this.image,
+        };
+    }
+
     private populateIngredient(ingredientData: IngredientDocument): void {
         this.ingredientId = ingredientData.id;
         this.name = ingredientData.name;
@@ -27,13 +38,13 @@ export class Ingredient implements IngredientInterface {
     }
 
     public async save() {
-        const savedIngredient = await this.ingredientRepository.save(this);
+        const savedIngredient = await this.ingredientRepository.save(this.toDatabaseObject());
         this.populateIngredient(savedIngredient);
         return this;
     }
 
     public async update(updateData: Partial<IngredientInterface>) {
-        const updatedIngredient = await this.ingredientRepository.update(this.ingredientId, updateData);
+        const updatedIngredient = await this.ingredientRepository.update(this.ingredientId, { ...this.toDatabaseObject(), ...updateData });
         if (updatedIngredient) {
             this.populateIngredient(updatedIngredient);
             return this;
@@ -44,16 +55,11 @@ export class Ingredient implements IngredientInterface {
     static async getAll() {
         const ingredientRepository = new IngredientRepository();
         const ingredients = await ingredientRepository.findAll();
-        if (ingredients) {
-            return ingredients.map(ingredientData => {
-                const ingredient = new Ingredient({});
-                ingredient.populateIngredient(ingredientData);
-                return ingredient;
-            });
-        }
-        else{
-            return []
-        }
+        return ingredients.map(ingredientData => {
+            const ingredient = new Ingredient({});
+            ingredient.populateIngredient(ingredientData);
+            return ingredient;
+        });
     }
 
     public async findById() {

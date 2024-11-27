@@ -4,7 +4,7 @@ import { TableDocument } from "../interfaces/TableInterface";
 export const TableSchema = new Schema<TableDocument>(
     {
       tableNumber: { type: Number, required: true, unique: true },
-      status: { type: String, enum: ["Disponible", "Ocupada", "Reservada"], default: "Disponible" },
+      status: { type: String, enum: ['Disponible', 'Ocupada', 'Reservada', 'Solicita Asistencia', 'Pago en Efectivo', 'Pago con Tarjeta'], default: "Disponible" },
     },
     { timestamps: true }
 );

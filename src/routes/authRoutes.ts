@@ -80,11 +80,12 @@ class AuthRoute {
         this.router.post(
             "/users/create-user",
             AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("CREATE_USER"),
+            //PermissionMiddleware.checkPermission("CREATE_USER"),
             [
                 body("name").isString().notEmpty(),
+                body("lastname").isString().notEmpty(),
                 body("email").isEmail(),
-                body("password").isString().isLength({ min: 6 }),
+                
                 ValidationMiddleware.handleInputErrors
             ],
             this.authController.createAccountByAdmin.bind(this.authController)
@@ -146,7 +147,7 @@ class AuthRoute {
             this.authController.updatePasswordWithToken.bind(this.authController)
         );
 
-        this.router.get(
+        this.router.post(
             "/check-password",
             [
                 body("password").isString().notEmpty(),
@@ -154,6 +155,12 @@ class AuthRoute {
                 ValidationMiddleware.handleInputErrors
             ],
             this.authController.checkPassword.bind(this.authController)
+        );
+
+        this.router.post(
+            "/update-password",
+            AuthMiddleware.authenticate,
+            this.authController.updatePassword.bind(this.authController)
         );
     }
 }
