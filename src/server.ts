@@ -18,6 +18,7 @@ import roleRoutes from "./routes/roleRoutes";
 import transbankRoutes from "./routes/transbankRoutes";
 import { Server, Socket } from "socket.io";
 import { SocketService } from "./services/SocketService";
+import assistanceRoutes from "./routes/assistanceRoutes";
 
 dotenv.config(); // Configuración de variables de entorno
 
@@ -70,6 +71,7 @@ class App {
     this.app.use("/api/role", roleRoutes);
     this.app.use("/api/ingredient", ingredientRoutes);
     this.app.use("/api/transbank", transbankRoutes);
+    this.app.use("/api/assistance", assistanceRoutes);
     // Servir las imágenes estáticas
     this.app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
   }
@@ -80,6 +82,11 @@ class App {
     this.io.on("connection", (socket) => {
       console.log(`Cliente conectado: ${socket.id}`);
       
+      socket.on("joinUserRoom", (userId: string) => {
+        socket.join(userId); // Usuario se une a la sala específica
+        console.log(`Cliente ${socket.id} se unió a la sala ${userId}`);
+      });
+
       // Aquí puedes configurar eventos de socket
       socket.on("joinRoom", (roomId: string) => {
         socket.join(roomId);
@@ -99,6 +106,16 @@ class App {
       socket.on("joinWaiter", () => {
         socket.join("waiter");
         console.log(`Cliente ${socket.id} se unió a la sala de meseros`);
+      });
+
+      socket.on("joinWaiterRoom", () => {
+        socket.join("waiterRoom");
+        console.log(`Cliente ${socket.id} se unió a la sala de pedidos de meseros`);
+      });
+
+      socket.on('leaveWaiterRoom', () => { 
+        socket.leave('waiter');
+        console.log(`Cliente ${socket.id} salió de la sala de pedidos de meseros`);
       });
 
       socket.on("disconnect", () => {

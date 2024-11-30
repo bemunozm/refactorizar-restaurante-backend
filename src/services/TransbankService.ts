@@ -104,5 +104,10 @@ export class TransbankService {
     
         return { message: "Token enviado a los meseros y mesa actualizada" };
     }
+
+    public async getTransactionByToken(token: string) {
+        const transaction = await new Transaction({ token }).findByToken();
+        return transaction;
+    }
     
 }

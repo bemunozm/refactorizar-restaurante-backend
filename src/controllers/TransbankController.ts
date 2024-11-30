@@ -43,6 +43,19 @@ export class TransbankController {
         }
     }
 
+    public async getTransactionByToken(req: Request, res: Response): Promise<Response> {
+        try {
+            const { token } = req.params;
+            const transaction = await this.transbankService.getTransactionByToken(token);
+            return transaction
+                ? res.status(200).json(transaction)
+                : res.status(404).json({ error: 'Transacción no encontrada' });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ error: 'Error buscando la transacción' });
+        }
+    }
+
     public async notifyWaitersWithToken(req: Request, res: Response): Promise<Response> {
         try {
             const { token, status } = req.body;
