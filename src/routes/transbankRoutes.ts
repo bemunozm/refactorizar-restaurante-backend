@@ -65,6 +65,17 @@ class TransbankRoute {
             ],
             this.transbankController.notifyWaitersWithToken.bind(this.transbankController)
         );
+
+        this.router.get(
+            "/transaction/:token",
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("GET_TRANSACTION"),
+            [
+                param("token").isString().withMessage("El token es obligatorio."),
+                ValidationMiddleware.handleInputErrors
+            ],
+            this.transbankController.getTransactionByToken.bind(this.transbankController)
+        );
     }
 }
 

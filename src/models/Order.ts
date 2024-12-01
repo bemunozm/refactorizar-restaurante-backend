@@ -150,8 +150,10 @@ export class Order implements OrderInterface {
 
     public async updateItemStatus(itemId: string, status: string): Promise<Order | null> {
         const updatedOrder = await this.orderRepository.updateItemStatus(itemId, status);
+        console.log('Updated Order',updatedOrder);
         if (updatedOrder) {
             await this.populateOrder(updatedOrder);
+            await this.populate();
             return this;
         }
         return null;

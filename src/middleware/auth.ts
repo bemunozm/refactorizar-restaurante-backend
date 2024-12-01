@@ -35,15 +35,19 @@ class AuthMiddleware {
 
         try {
             const decoded: any = jwt.verify(token, process.env.JWT_SECRET as string);
-
-            const session = new Session({ sessionId: decoded.sessionId });
-            await session.findById();
-
+            
+            let session;
+            if (decoded.sessionId !== '') {
+                session = new Session({ sessionId: decoded.sessionId });
+                await session.findById();
+            }
+            
             let table;
             if (decoded.tableId !== ''){
                 table = new Table({ tableId: decoded.tableId });
                 await table.findById();
             }
+
             
             // Asigna sessionId y tableId desde el token decodificado, si existen
             req.sessionId = session || undefined;

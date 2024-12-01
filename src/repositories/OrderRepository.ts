@@ -47,6 +47,7 @@ public async updateGuestToUserOrders(guestId: string, userId: string) {
   }
   
   public async updateItemStatus( itemId: string, status: string) {
+    console.log(itemId, status);
     const order = await this.model.findOneAndUpdate(
         { 'items._id': itemId },
         { $set: { 'items.$.status': status } },
