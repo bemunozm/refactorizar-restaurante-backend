@@ -19,6 +19,7 @@ import transbankRoutes from "./routes/transbankRoutes";
 import { Server, Socket } from "socket.io";
 import { SocketService } from "./services/SocketService";
 import assistanceRoutes from "./routes/assistanceRoutes";
+import deliveryRoutes from "./routes/deliveryRoutes";
 
 dotenv.config(); // Configuración de variables de entorno
 
@@ -72,13 +73,14 @@ class App {
     this.app.use("/api/ingredient", ingredientRoutes);
     this.app.use("/api/transbank", transbankRoutes);
     this.app.use("/api/assistance", assistanceRoutes);
+    this.app.use("/api/delivery", deliveryRoutes);
     // Servir las imágenes estáticas
     this.app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
   }
 
   private initSockets() {
     SocketService.init(this.io);
-
+    let connectedUsers = [];
     this.io.on("connection", (socket) => {
       console.log(`Cliente conectado: ${socket.id}`);
       
@@ -108,6 +110,51 @@ class App {
         console.log(`Cliente ${socket.id} se unió a la sala de meseros`);
       });
 
+      socket.on("joinDeliveryAdmin", () => {
+        socket.join("deliveryRoom");
+        console.log(`Cliente ${socket.id} se unió a la sala de entregas como administrador`);
+        socket.emit('connectedUsers', connectedUsers);
+      });
+
+      socket.on('leaveDeliveryAdmin', () => {
+        console.log(`Cliente ${socket.id} salió de la sala de entregas como administrador`);
+        socket.leave("deliveryRoom");
+      });
+
+      socket.on('joinDeliveryRoute', (deliveryId: string) => {
+        socket.join(`deliveryRoute-${deliveryId}`);
+        console.log(`Cliente ${socket.id} se unió a la sala de entrega ${deliveryId}`);
+      });
+
+      socket.on('leaveDeliveryRoute', (deliveryId: string) => {
+        console.log(`Cliente ${socket.id} salió de la sala de entrega ${deliveryId}`);
+        socket.leave(`deliveryRoute-${deliveryId}`);
+      });
+
+      socket.on('updateLocation', (location: { lat: number, lng: number }, deliveryId: string) => {
+        socket.to(`deliveryRoute-${deliveryId}`).emit('updateLocation', location);
+      });
+
+      socket.on('joinDeliveryRoom', ({ user }) => {
+        // Añadir el usuario a la lista de conectados si no está ya
+        socket.join("deliveryRoom");
+        if (!connectedUsers.some(user => user.user.userId === user.userId)) {
+            connectedUsers.push({ user: user, socketId: socket.id });
+            console.log(`Usuario ${user.userId} conectado a la sala de entregas.`);
+        }
+        // Emitir la lista actualizada de usuarios conectados
+        socket.broadcast.emit('connectedUsers', connectedUsers);
+    });
+
+      socket.on('leaveDeliveryRoom', ({ user }) => {
+        // Eliminar el usuario de la lista de conectados
+        connectedUsers = connectedUsers.filter(user => user.user.userId !== user.userId);
+        console.log(`Usuario ${user.userId} desconectado de la sala de entregas.`);
+        // Emitir la lista actualizada de usuarios conectados
+        socket.broadcast.emit('connectedUsers', connectedUsers);
+        socket.leave("deliveryRoom");
+    });
+
       socket.on("joinWaiterRoom", () => {
         socket.join("waiterRoom");
         console.log(`Cliente ${socket.id} se unió a la sala de pedidos de meseros`);
@@ -119,6 +166,8 @@ class App {
       });
 
       socket.on("disconnect", () => {
+        connectedUsers = connectedUsers.filter(user => user.socketId !== socket.id);
+        socket.broadcast.emit('connectedUsers', connectedUsers);
         console.log(`Cliente desconectado: ${socket.id}`);
       });
     });
