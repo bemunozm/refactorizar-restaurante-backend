@@ -47,7 +47,7 @@ export class TransbankService {
             transactionId,
             sessionId || onlineOrderId, // Usar sessionId o onlineOrderId
             amount,
-            `${process.env.VITE_API_URL}/transaction-result`
+            `${process.env.FRONTEND_URL}/transaction-result`
         );
 
         await transaction.updateToken(response.token);
