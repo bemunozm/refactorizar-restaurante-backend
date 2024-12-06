@@ -36,11 +36,10 @@ class App {
     this.io = new Server(this.server, {
       cors: {
         origin: process.env.FRONTEND_URL, // Configura el origen permitido
-        methods: ["GET", "POST"],
+        methods: ["GET", "POST", "PUT", "DELETE"],
       },
     }); // Inicializa Socket.IO
     this.init();
-    //this.unitaryTest(); // Ejecuta las pruebas unitarias
   }
 
   private init() {
@@ -56,7 +55,7 @@ class App {
   }
 
   private initMiddlewares() {
-    this.app.use(cors());
+    this.app.use(cors({origin: process.env.FRONTEND_URL, methods: ["GET", "POST", "PUT", "DELETE"]}));
     this.app.use(morgan("dev")); // Logging
     this.app.use(express.json()); // Leer datos de formularios
     this.app.use(express.urlencoded({ extended: true }));
