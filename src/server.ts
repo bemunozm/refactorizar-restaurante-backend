@@ -56,7 +56,7 @@ class App {
   }
 
   private initMiddlewares() {
-    this.app.use(cors());
+    this.app.use(cors({origin: process.env.FRONTEND_URL}));
     this.app.use(morgan("dev")); // Logging
     this.app.use(express.json()); // Leer datos de formularios
     this.app.use(express.urlencoded({ extended: true }));
