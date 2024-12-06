@@ -23,8 +23,8 @@ class TransbankRoute {
             //PermissionMiddleware.checkPermission("CREATE_TRANSACTION"),
             [
                 body("amount").isFloat({ gt: 0 }).withMessage("El monto debe ser un número positivo."),
-                body("sessionId").isMongoId().withMessage("ID de sesión inválido."),
-                body("orders").isArray({ min: 1 }).withMessage("Debe incluir al menos un pedido en la transacción."),
+                body("sessionId").isMongoId().optional().withMessage("ID de sesión inválido."),
+               
                 ValidationMiddleware.handleInputErrors
             ],
             this.transbankController.createTransaction.bind(this.transbankController)

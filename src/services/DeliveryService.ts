@@ -3,11 +3,12 @@ import { Order } from '../models/Order';
 import { SocketService } from './SocketService';
 
 export class DeliveryService {
-    public async createDelivery(deliveryData: { orders: string[], address: { lat: number, lng: number } }) {
+    public async createDelivery(deliveryData: { orders: string[], address: { lat: number, lng: number }, customerInformation: Delivery['customerInformation'] }) {
         const delivery = new Delivery({
             orders: deliveryData.orders.map(orderId => new Order({ orderId })),
-            address: deliveryData.address,
-            status: 'Pendiente'
+            address: deliveryData.address ? deliveryData.address : null,
+            customerInformation: deliveryData.customerInformation,
+            status: 'Recibido'
         });
         await delivery.save();
             SocketService.to('deliveryRoom', 'newDelivery', delivery);
@@ -16,6 +17,10 @@ export class DeliveryService {
 
     public async getDeliveries() {
         return await Delivery.getAll();
+    }
+
+    public async getDeliveryByOrderId(orderId: string) {
+        return await Delivery.getByOrderId(orderId);
     }
 
     public async assignDelivery(deliveryId: string, userId: string) {
@@ -37,7 +42,7 @@ export class DeliveryService {
         return updatedDelivery;
     }
 
-    public async updateDeliveryStatus(deliveryId: string, status: 'Pendiente' | 'En Progreso' | 'Completado') {
+    public async updateDeliveryStatus(deliveryId: string, status: 'Recibido' | 'En Preparación' | 'En Camino' | 'Completado') {
         const delivery = new Delivery({ deliveryId });
         const updatedDelivery = await delivery.updateStatus(status);
         if (updatedDelivery) {
@@ -80,7 +85,7 @@ export class DeliveryService {
 
     public async getDeliveriesByUserId(userId: string) {
         const deliveries = await Delivery.getAll();
-        return deliveries.filter(delivery => delivery.user?.userId ? delivery.user.userId === userId : false);
+        return deliveries.filter(delivery => delivery.deliveryMan?.userId ? delivery.deliveryMan.userId === userId : false);
     }
 
     public async getIncompleteDeliveries() {

@@ -7,8 +7,9 @@ import { Order } from "./Order";
 export class Transaction implements TransactionInterface {
     public transactionId?: string;
     public token: string;
-    public orders: Order[];
-    public session: Session;
+    public orders?: Order[];
+    public session?: Session;
+    public onlineOrderId?: string;
     public amount: number;
     public status: 'CREADA' | 'CONFIRMADA' | 'ANULADA';
     private transactionRepository: TransactionRepository;
@@ -18,7 +19,8 @@ export class Transaction implements TransactionInterface {
         this.token = data.token || '';
         this.amount = data.amount || 0;
         this.status = data.status || 'CREADA';
-        
+        this.onlineOrderId = data.onlineOrderId;
+
         // Sanitizar datos para asegurar que `session` y `orders` sean instancias de sus modelos
         this.sanitizeData(data);
 
@@ -30,16 +32,17 @@ export class Transaction implements TransactionInterface {
      */
     private sanitizeData(data: Partial<TransactionInterface>) {
         // Asegurar que `session` sea una instancia de `Session`
-        this.session = data.session instanceof Session 
+        this.session = data.session ? (data.session instanceof Session 
             ? data.session 
-            : new Session({ sessionId: data.session || '' });
+            : new Session({ sessionId: data.session || '' }))
+            : undefined;
 
-        // Asegurar que cada elemento en `orders` sea una instancia de `Order`
-        this.orders = (data.orders || []).map(order =>
+        // Asegurar que cada elemento en `orders` sea una instancia de `Order`, si `orders` está presente
+        this.orders = data.orders ? data.orders.map(order =>
             order instanceof Order
                 ? order
                 : new Order({ orderId: order || '' })
-        );
+        ) : undefined;
     }
 
     /**
@@ -47,7 +50,8 @@ export class Transaction implements TransactionInterface {
      */
     public async populate(): Promise<void> {
         // Poblar `session` si solo tiene el ID
-        if (!this.session.table.tableId) {
+
+        if (this.session && !this.session.table.tableId) {
             this.session = await this.session.findById();
         }
 
@@ -66,13 +70,14 @@ export class Transaction implements TransactionInterface {
      * Guarda la transacción en la base de datos.
      */
     public async save(): Promise<Transaction> {
-        const orders = this.orders.map(order => order.orderId);
+        const orders = this.orders ? this.orders.map(order => order.orderId) : [];
 
         const DataToSave = {
             token: this.token,
             amount: this.amount,
             status: this.status,
-            session: this.session.sessionId,
+            session: this.session?.sessionId,
+            onlineOrderId: this.onlineOrderId,
             orders: orders,
         }
 
@@ -92,6 +97,7 @@ export class Transaction implements TransactionInterface {
             this.token = transaction.token;
             this.amount = transaction.amount;
             this.status = transaction.status;
+            this.onlineOrderId = transaction.onlineOrderId;
 
             // Sanitizar y poblar `session` y `orders`
             this.sanitizeData(transaction);
@@ -112,6 +118,7 @@ export class Transaction implements TransactionInterface {
             this.token = transaction.token;
             this.amount = transaction.amount;
             this.status = transaction.status;
+            this.onlineOrderId = transaction.onlineOrderId;
 
             // Sanitizar y poblar `session` y `orders`
             this.sanitizeData(transaction);

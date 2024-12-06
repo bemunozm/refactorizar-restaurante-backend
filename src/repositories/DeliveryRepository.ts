@@ -28,6 +28,15 @@ export class DeliveryRepository extends GenericRepository<DeliveryDocument> {
         }
     }
 
+    public async findByOrderId(orderId: string): Promise<DeliveryDocument | null> {
+        try {
+            return await this.model.findOne({ orders: { $in: [orderId] } });
+        } catch (error) {
+            console.error(`Error al encontrar la entrega por orderId: ${error}`);
+            throw new Error('Error al encontrar la entrega por orderId');
+        }
+    }
+
     public async findById(id: string): Promise<DeliveryDocument | null> {
         try {
             return await this.model.findById(id);

@@ -10,8 +10,8 @@ export class DeliveryController {
 
     public async create(req: Request, res: Response): Promise<Response> {
         try {
-            const { orders, address } = req.body;
-            const delivery = await this.deliveryService.createDelivery({ orders, address });
+            const { orders, address, customerInformation } = req.body;
+            const delivery = await this.deliveryService.createDelivery({ orders, address, customerInformation });
             return res.status(201).json(delivery);
         } catch (error) {
             console.error(`Error al crear la entrega: ${error}`);
@@ -25,6 +25,17 @@ export class DeliveryController {
             return res.status(200).json(deliveries);
         } catch (error) {
             console.error(`Error al obtener las entregas: ${error}`);
+            return res.status(400).json({ error: error.message });
+        }
+    }
+
+    public async getDeliveryByOrderId(req: Request, res: Response): Promise<Response> {
+        try {
+            const { orderId } = req.params;
+            const delivery = await this.deliveryService.getDeliveryByOrderId(orderId);
+            return res.status(200).json(delivery);
+        } catch (error) {
+            console.error(`Error al obtener la entrega por orderId: ${error}`);
             return res.status(400).json({ error: error.message });
         }
     }

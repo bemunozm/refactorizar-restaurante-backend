@@ -7,10 +7,33 @@ import { SocketService } from './SocketService';
 import { Table } from '../models/Table';
 
 export class TransbankService {
-    public async createTransaction(data: { amount: number; sessionId: string; orders: string[] }) {
-        const { amount, sessionId, orders } = data;
+    public async createTransaction(data: { amount: number; sessionId?: string; onlineOrderId?: string; orders?: string[] }) {
+        const { amount, sessionId, onlineOrderId, orders } = data;
         console.log(data);
-        const transaction = new Transaction({ token: '', session: sessionId, orders, amount });
+
+        // Verificar que al menos uno de los identificadores esté presente
+        if (!sessionId && !onlineOrderId) {
+            throw new Error('Se requiere sessionId o onlineOrderId');
+        }
+
+        // Crear la transacción con el identificador adecuado
+        const transactionData: any = {
+            token: '',
+            amount
+        };
+
+        // Asignar session o onlineOrderId si están presentes
+        if (sessionId) {
+            transactionData.session = sessionId;
+        }
+        if (onlineOrderId) {
+            transactionData.onlineOrderId = onlineOrderId;
+        }
+        if (orders) {
+            transactionData.orders = orders;
+        }
+
+        const transaction = new Transaction(transactionData);
         await transaction.save();
 
         const transactionId = transaction.transactionId;
@@ -22,15 +45,17 @@ export class TransbankService {
 
         const response = await transbankTransaction.create(
             transactionId,
-            sessionId,
+            sessionId || onlineOrderId, // Usar sessionId o onlineOrderId
             amount,
             'http://localhost:5173/transaction-result'
         );
 
         await transaction.updateToken(response.token);
 
-        const session = new Session({ sessionId });
-        await session.updateStatus('Pagando');
+        if (sessionId) {
+            const session = new Session({ sessionId });
+            await session.updateStatus('Pagando');
+        }
 
         return response;
     }
@@ -41,28 +66,33 @@ export class TransbankService {
         );
 
         const response = await transbankTransaction.commit(token);
+        console.log(response);
 
         const transaction = await new Transaction({ token }).findByToken();
         if (!transaction) throw new Error('Transacción no encontrada');
         if (transaction.status === 'CONFIRMADA') throw new Error('Transacción ya confirmada');
 
-        //Actualizar estado de las ordenes
-        for (const order of transaction.orders) {
-            const orderInstance = await new Order({ orderId: order.orderId }).findById();
-            if (!order) throw new Error('Orden no encontrada');
-            await orderInstance.updateOrderStatus('Pagado');
-        }
+        // Actualizar estado de las órdenes
+        if (transaction.orders.length > 0) {
+            for (const order of transaction.orders) {
+                const orderInstance = await new Order({ orderId: order.orderId }).findById();
+                if (!orderInstance) throw new Error('Orden no encontrada');
+                await orderInstance.updateOrderStatus('Pagado');
+            }
 
-        const sessionOrders = await Order.findBySessionId(transaction.session.sessionId);
-        const allOrdersPaid = sessionOrders.every((order) => order.status === 'Pagado');
-        console.log(allOrdersPaid);
-        const session = new Session({ sessionId: transaction.session.sessionId });
-        if (allOrdersPaid) {
-            await session.updateStatus('Finalizada');
-        } else {
-            await session.updateStatus('Activa');
+            // Manejar la lógica de sesión solo si `session` está presente
+            if (transaction.session.sessionId) {
+                const sessionOrders = await Order.findBySessionId(transaction.session.sessionId);
+                const allOrdersPaid = sessionOrders.every((order) => order.status === 'Pagado');
+                console.log(allOrdersPaid);
+                const session = new Session({ sessionId: transaction.session.sessionId });
+                if (allOrdersPaid) {
+                    await session.updateStatus('Finalizada');
+                } else {
+                    await session.updateStatus('Activa');
+                }
+            }
         }
-
         await transaction.updateStatus('CONFIRMADA');
 
         return response;
@@ -72,7 +102,8 @@ export class TransbankService {
         const transaction = await new Transaction({ transactionId }).findById();
         if (!transaction) throw new Error('Transacción no encontrada');
 
-        if (status === 'ANULADA') {
+        // Manejar la lógica de sesión solo si `session` está presente
+        if (status === 'ANULADA' && transaction.session) {
             const session = new Session({ sessionId: transaction.session.sessionId });
             await session.updateStatus('Activa');
         }
@@ -83,8 +114,9 @@ export class TransbankService {
     }
 
     public async notifyWaitersWithToken({ token, status }: { token: string, status: 'Pago con Tarjeta' | 'Pago en Efectivo' }) {
-
         const transaction = await new Transaction({ token }).findByToken();
+        if (!transaction || !transaction.session) throw new Error('Transacción o sesión no encontrada');
+
         const tableId = transaction.session.table.tableId;
         // Emitir el token de Transbank a los meseros
         SocketService.to("waiter", "paymentTokenNotification", {

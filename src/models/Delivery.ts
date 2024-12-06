@@ -6,17 +6,26 @@ import { User } from './User';
 export class Delivery implements DeliveryInterface {
     public deliveryId?: string;
     public orders: Order[];
-    public status: 'Pendiente' | 'En Progreso' | 'Completado';
+    public status: 'Recibido' | 'En Preparación' | 'En Camino' | 'Completado';
+    public customerInformation: {
+        name: string;
+        lastName: string;
+        phone: string;
+        email?: string;
+        instructions?: string | null;
+    };
     public address: { lat: number; lng: number };
     public startPoint: { lat: number; lng: number };
     public user?: User;
+    public deliveryMan?: User;
     public createdAt?: Date;
     public updatedAt?: Date;
     private deliveryRepository: DeliveryRepository;
 
     constructor(delivery: Partial<DeliveryInterface>) {
         this.deliveryId = delivery.deliveryId;
-        this.status = delivery.status || 'Pendiente';
+        this.status = delivery.status || 'Recibido';
+        this.customerInformation = delivery.customerInformation;
         this.address = delivery.address;
         this.startPoint = delivery.startPoint;
         this.createdAt = delivery.createdAt;
@@ -40,6 +49,12 @@ export class Delivery implements DeliveryInterface {
             : delivery.user 
                 ? new User({ userId: delivery.user })
                 : undefined;
+
+        this.deliveryMan = delivery.deliveryMan instanceof User 
+            ? delivery.deliveryMan 
+            : delivery.deliveryMan 
+                ? new User({ userId: delivery.deliveryMan })
+                : undefined;
     }
 
     public async save(): Promise<Delivery> {
@@ -48,7 +63,9 @@ export class Delivery implements DeliveryInterface {
             status: this.status,
             address: this.address,
             startPoint: this.startPoint,
-            user: this.user?.userId
+            user: this.user?.userId,
+            deliveryMan: this.deliveryMan?.userId,
+            customerInformation: this.customerInformation
         };
 
         const savedDelivery = await this.deliveryRepository.save(deliveryData);
@@ -67,14 +84,25 @@ export class Delivery implements DeliveryInterface {
         }));
     }
 
+    public static async getByOrderId(orderId: string): Promise<Delivery | null> {
+        const deliveryRepository = new DeliveryRepository();
+        const deliveryDoc = await deliveryRepository.findByOrderId(orderId);
+        if (deliveryDoc) {
+            const delivery = new Delivery({});
+            await delivery.populateDelivery(deliveryDoc);
+            return delivery;
+        }
+        return null;
+    }
+
     public async assignUser(userId: string): Promise<Delivery | null> {
         const user = new User({ userId });
         if (!(await user.findById())) {
             throw new Error('Usuario no encontrado');
         }
 
-        this.user = user;
-        const updatedDelivery = await this.deliveryRepository.update(this.deliveryId, { user: user.userId });
+        this.deliveryMan = user;
+        const updatedDelivery = await this.deliveryRepository.update(this.deliveryId, { deliveryMan: user.userId });
         if (updatedDelivery) {
             await this.populateDelivery(updatedDelivery);
             return this;
@@ -83,7 +111,7 @@ export class Delivery implements DeliveryInterface {
     }
 
     public async start(): Promise<Delivery | null> {
-        const updatedDelivery = await this.deliveryRepository.update(this.deliveryId, { status: 'En Progreso', startPoint: this.startPoint  });
+        const updatedDelivery = await this.deliveryRepository.update(this.deliveryId, { status: 'En Camino', startPoint: this.startPoint  });
         if (updatedDelivery) {
             await this.populateDelivery(updatedDelivery);
             return this;
@@ -91,7 +119,7 @@ export class Delivery implements DeliveryInterface {
         return null;
     }
 
-    public async updateStatus(status: 'Pendiente' | 'En Progreso' | 'Completado'): Promise<Delivery | null> {
+    public async updateStatus(status: 'Recibido' | 'En Preparación' | 'En Camino' | 'Completado'): Promise<Delivery | null> {
         this.status = status;
         const updatedDelivery = await this.deliveryRepository.update(this.deliveryId, { status });
         if (updatedDelivery) {
@@ -112,8 +140,8 @@ export class Delivery implements DeliveryInterface {
     }
 
     public async inProgress(): Promise<Delivery | null> {
-        this.status = 'En Progreso';
-        const updatedDelivery = await this.deliveryRepository.update(this.deliveryId, { status: 'En Progreso' });
+        this.status = 'En Preparación';
+        const updatedDelivery = await this.deliveryRepository.update(this.deliveryId, { status: 'En Preparación' });
         if (updatedDelivery) {
             await this.populateDelivery(updatedDelivery);
             return this;
@@ -122,8 +150,8 @@ export class Delivery implements DeliveryInterface {
     }
 
     public async pending(): Promise<Delivery | null> {
-        this.status = 'Pendiente';
-        const updatedDelivery = await this.deliveryRepository.update(this.deliveryId, { status: 'Pendiente' });
+        this.status = 'Recibido';
+        const updatedDelivery = await this.deliveryRepository.update(this.deliveryId, { status: 'Recibido' });
         if (updatedDelivery) {
             await this.populateDelivery(updatedDelivery);
             return this;
@@ -146,10 +174,12 @@ export class Delivery implements DeliveryInterface {
             const order = new Order({ orderId });
             return await order.findById();
         }));
+        this.customerInformation = deliveryDoc.customerInformation;
         this.status = deliveryDoc.status;
         this.address = deliveryDoc.address;
         this.startPoint = deliveryDoc.startPoint;
         this.user = deliveryDoc.user ? await new User({ userId: deliveryDoc.user.toString() }).findById() : undefined;
+        this.deliveryMan = deliveryDoc.deliveryMan ? await new User({ userId: deliveryDoc.deliveryMan.toString() }).findById() : undefined;
         this.createdAt = deliveryDoc.createdAt;
         this.updatedAt = deliveryDoc.updatedAt;
     }

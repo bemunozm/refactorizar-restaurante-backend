@@ -12,7 +12,7 @@ export class OrderController {
         try {
             console.log(req.body);
             const order = await this.orderService.orderProducts(req.body);
-            return res.status(201).json({ message: 'Pedido realizado con éxito', order });
+            return res.status(201).json(order);
         } catch (error) {
             console.error(error);
             return res.status(500).json({ error: 'Hubo un error al realizar el pedido' });

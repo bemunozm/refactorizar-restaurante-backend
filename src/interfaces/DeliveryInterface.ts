@@ -5,7 +5,14 @@ import { User } from '../models/User';
 export interface DeliveryInterface {
     deliveryId?: string;
     orders: Order[] | string[];
-    status: 'Pendiente' | 'En Progreso' | 'Completado';
+    status: 'Recibido' | 'En Preparación' | 'En Camino' | 'Completado';
+    customerInformation: {
+        name: string;
+        lastName: string;
+        phone: string;
+        email?: string;
+        instructions?: string | null;
+    };
     address: {
         lat: number;
         lng: number;
@@ -15,6 +22,7 @@ export interface DeliveryInterface {
         lng: number;
     };
     user?: User | string;
+    deliveryMan?: User | string;
     createdAt?: Date;
     updatedAt?: Date;
 } 

@@ -13,6 +13,7 @@ class DeliveryRoute {
 
     private initRoutes() {
         this.router.get('/incomplete', this.deliveryController.getIncompleteDeliveries.bind(this.deliveryController));
+        this.router.get('/order/:orderId', this.deliveryController.getDeliveryByOrderId.bind(this.deliveryController));
         this.router.post('/create', this.deliveryController.create.bind(this.deliveryController));
         this.router.get('/get', this.deliveryController.get.bind(this.deliveryController));
         this.router.post('/assign', this.deliveryController.assign.bind(this.deliveryController));
