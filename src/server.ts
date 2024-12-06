@@ -40,7 +40,6 @@ class App {
       },
     }); // Inicializa Socket.IO
     this.init();
-    //this.unitaryTest(); // Ejecuta las pruebas unitarias
   }
 
   private init() {
