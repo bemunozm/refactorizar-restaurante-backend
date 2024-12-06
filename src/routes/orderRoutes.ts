@@ -33,14 +33,14 @@ class OrderRoute {
 
         this.router.get(
             "/get",
-            AuthMiddleware.authenticate,
+            //AuthMiddleware.authenticate,
             //PermissionMiddleware.checkPermission("VIEW_ORDERS"),
             this.orderController.getOrders.bind(this.orderController)
         );
 
         this.router.get(
             "/get/:orderId",
-            AuthMiddleware.authenticate,
+            //AuthMiddleware.authenticate,
             //PermissionMiddleware.checkPermission("VIEW_ORDER"),
             //param("orderId").isMongoId().withMessage("ID de orden inválido."),
             ValidationMiddleware.handleInputErrors,
@@ -49,7 +49,7 @@ class OrderRoute {
 
         this.router.get(
             "/session/:sessionId",
-            AuthMiddleware.authenticate,
+            //AuthMiddleware.authenticate,
             //PermissionMiddleware.checkPermission("VIEW_ORDERS"),
             //param("sessionId").isMongoId().withMessage("ID de sesión inválido."),
             ValidationMiddleware.handleInputErrors,
