@@ -32,7 +32,7 @@ class CategoryRoute {
 
         this.router.get(
             "/get",
-            AuthMiddleware.authenticate,
+            //AuthMiddleware.authenticate,
             //PermissionMiddleware.checkPermission("VIEW_CATEGORIES"),
             this.categoryController.getCategories.bind(this.categoryController)
         );
