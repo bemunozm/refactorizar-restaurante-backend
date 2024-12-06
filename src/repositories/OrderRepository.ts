@@ -1,10 +1,11 @@
-
 import { GenericRepository } from "./GenericRepository";
 import { Token } from "../models/Token"; // Importamos la clase User con el modelo encapsulado
 import OrderModel from "../schemas/OrderSchema";
 import { OrderDocument } from "../interfaces/OrderInterface";
 import { Order } from "../models/Order";
 import SessionModel from "../schemas/SessionSchema";
+import DeliveryModel from "../schemas/DeliverySchema";
+import { DeliveryDocument } from "../interfaces/DeliveryInterface";
 
 export class OrderRepository extends GenericRepository<OrderDocument> {
   private static mongooseModel = OrderModel;
@@ -32,10 +33,11 @@ public async updateGuestToUserOrders(guestId: string, userId: string) {
   public async save(order): Promise<OrderDocument> {
     try {
       const orderDocument = new this.model({
-        session: order.session.sessionId,
-        table: order.table.tableId,
-        guest: order.guest.guestId || undefined,
-        user: order.user.userId || undefined,
+        session: order.session ? order.session.sessionId : undefined,
+        table: order.table ? order.table.tableId : undefined,
+        guest: order.guest ? order.guest.guestId : undefined,
+        user: order.user ? order.user.userId : undefined,
+        type: order.type,
         items: order.items,
         status: order.status,
       });
@@ -57,9 +59,21 @@ public async updateGuestToUserOrders(guestId: string, userId: string) {
     }
 
     public async findForKitchen() {
-      const activeSessions = await SessionModel.find({ status: { $ne: 'Finalizada' } }).select('_id');
-      return await this.model.find({ session: { $in: activeSessions } })
-        .sort({ createdAt: 1 });
+        const activeSessions = await SessionModel.find({ status: { $ne: 'Finalizada' } }).select('_id');
+        
+        // Obtiene todos los pedidos que sean del tipo Delivery o Retiro en Tienda
+        const activeDeliveries = await this.model.find({ 
+            type: { $in: ['Delivery', 'Retiro en Tienda'] }, 
+        });
+
+        // Obtener las órdenes relacionadas con las sesiones activas
+        const sessionOrders = await this.model.find({ session: { $in: activeSessions } }).sort({ createdAt: 1 });
+
+
+        // Combinar las órdenes de sesiones y entregas
+        const combinedOrders = [...sessionOrders, ...activeDeliveries];
+
+        return combinedOrders;
     }
 
     public async findByUserId(userId: string) {
@@ -72,3 +86,4 @@ public async updateGuestToUserOrders(guestId: string, userId: string) {
     }
 
 }
+

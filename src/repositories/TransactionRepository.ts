@@ -10,11 +10,12 @@ export class TransactionRepository extends GenericRepository<TransactionDocument
         super(TransactionRepository.mongooseModel);
     }
 
-    public async save(transaction: TransactionInterface) {
+    public async save(transaction) {
         const transactionDocument = new TransactionModel({
             token: transaction.token,
-            orders: transaction.orders,
+            orders: transaction.orders ? transaction.orders : undefined,
             session: transaction.session,
+            onlineOrderId: transaction.onlineOrderId,
             amount: transaction.amount,
             status: transaction.status,
         });

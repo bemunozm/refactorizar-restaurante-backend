@@ -10,8 +10,19 @@ export class TransbankController {
 
     public async createTransaction(req: Request, res: Response): Promise<Response> {
         try {
-            const { amount, sessionId, orders } = req.body;
-            const response = await this.transbankService.createTransaction({ amount, sessionId, orders });
+            const { amount, sessionId, onlineOrderId, orders } = req.body;
+
+            if (!sessionId && !onlineOrderId) {
+                return res.status(400).json({ error: 'Se requiere sessionId o onlineOrderId' });
+            }
+
+            const response = await this.transbankService.createTransaction({
+                amount,
+                sessionId,
+                onlineOrderId,
+                orders
+            });
+
             return res.status(200).json(response);
         } catch (error) {
             console.error(error);
