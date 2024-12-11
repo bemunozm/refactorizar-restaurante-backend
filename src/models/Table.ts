@@ -4,7 +4,7 @@ import { TableInterface } from "../interfaces/TableInterface";
 export class Table implements TableInterface {
     public tableId?: string;
     public tableNumber: number;
-    public status: 'Disponible' | 'Ocupada' | 'Reservada' | 'Solicita Asistencia' | 'Pago en Efectivo' | 'Pago con Tarjeta';;
+    public status: 'Disponible' | 'Ocupada' | 'Reservada' | 'Solicita Asistencia' | 'Pago con Efectivo' | 'Pago con Tarjeta';;
     private tableRepository: TableRepository;
 
     constructor(data: Partial<TableInterface>) {

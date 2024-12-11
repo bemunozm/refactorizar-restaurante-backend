@@ -32,11 +32,12 @@ public async updateGuestToUserOrders(guestId: string, userId: string) {
   // Método para guardar una instancia de Order en la base de datos
   public async save(order): Promise<OrderDocument> {
     try {
+      console.log('order desde el repositorio', order);
       const orderDocument = new this.model({
-        session: order.session ? order.session.sessionId : undefined,
-        table: order.table ? order.table.tableId : undefined,
-        guest: order.guest ? order.guest.guestId : undefined,
-        user: order.user ? order.user.userId : undefined,
+        session: order.session ? order.session : undefined,
+        table: order.table ? order.table : undefined,
+        guest: order.guest ? order.guest : undefined,
+        user: order.user ? order.user : undefined,
         type: order.type,
         items: order.items,
         status: order.status,
