@@ -113,7 +113,7 @@ export class TransbankService {
         return transaction;
     }
 
-    public async notifyWaitersWithToken({ token, status }: { token: string, status: 'Pago con Tarjeta' | 'Pago en Efectivo' }) {
+    public async notifyWaitersWithToken({ token, status }: { token: string, status: 'Pago con Tarjeta' | 'Pago con Efectivo' }) {
         const transaction = await new Transaction({ token }).findByToken();
         if (!transaction || !transaction.session) throw new Error('Transacción o sesión no encontrada');
 
@@ -141,5 +141,10 @@ export class TransbankService {
         const transaction = await new Transaction({ token }).findByToken();
         return transaction;
     }
-    
+
+    public async getTransactionByOnlineOrderId(onlineOrderId: string) {
+        const transaction = await Transaction.findByOnlineOrderId(onlineOrderId);
+        if (!transaction) throw new Error('Transacción no encontrada');
+        return transaction;
+    }
 }

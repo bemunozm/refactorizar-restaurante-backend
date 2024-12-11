@@ -59,6 +59,7 @@ export class OrderService {
             type: type
         });
         const savedOrder = await order.save();
+        console.log('savedOrder', savedOrder);
 
         // Emitir actualización a la sesión correspondiente si existe
         if (sessionId) {

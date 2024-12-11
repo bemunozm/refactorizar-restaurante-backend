@@ -76,6 +76,12 @@ class TransbankRoute {
             ],
             this.transbankController.getTransactionByToken.bind(this.transbankController)
         );
+
+        this.router.get(
+            "/transaction/order/:onlineOrderId",
+            ValidationMiddleware.handleInputErrors,
+            this.transbankController.getTransactionByOnlineOrderId.bind(this.transbankController)
+        );
     }
 }
 

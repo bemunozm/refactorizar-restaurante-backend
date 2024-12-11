@@ -105,7 +105,7 @@ export class Order implements OrderInterface {
         
         const DataToSave = {
             session: this.session ? this.session.sessionId : undefined,
-            table: this.table ? this.table.tableNumber : undefined,
+            table: this.table ? this.table.tableId : undefined,
             user: this.user ? this.user.userId : undefined,
             guest: this.guest ? this.guest.guestId : undefined,
             items,

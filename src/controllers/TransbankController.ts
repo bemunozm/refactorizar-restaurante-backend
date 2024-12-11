@@ -77,4 +77,15 @@ export class TransbankController {
             return res.status(500).json({ error: 'Error notificando a los garzones' });
         }
     }
+
+    public async getTransactionByOnlineOrderId(req: Request, res: Response): Promise<Response> {
+        try {
+            const { onlineOrderId } = req.params;
+            const transaction = await this.transbankService.getTransactionByOnlineOrderId(onlineOrderId);
+            return res.status(200).json(transaction);
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ error: 'Error buscando la transacción' });
+        }
+    }
 }

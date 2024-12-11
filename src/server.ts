@@ -20,6 +20,7 @@ import { Server, Socket } from "socket.io";
 import { SocketService } from "./services/SocketService";
 import assistanceRoutes from "./routes/assistanceRoutes";
 import deliveryRoutes from "./routes/deliveryRoutes";
+import discountRoutes from "./routes/discountRoutes";
 
 dotenv.config(); // Configuración de variables de entorno
 
@@ -73,6 +74,7 @@ class App {
     this.app.use("/api/transbank", transbankRoutes);
     this.app.use("/api/assistance", assistanceRoutes);
     this.app.use("/api/delivery", deliveryRoutes);
+    this.app.use("/api/discount", discountRoutes);
     // Servir las imágenes estáticas
     this.app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
   }

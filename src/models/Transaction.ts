@@ -144,4 +144,17 @@ export class Transaction implements TransactionInterface {
         await this.transactionRepository.updateStatus(this.transactionId, status);
         this.status = status;
     }
+
+    static async findByOnlineOrderId(onlineOrderId: string): Promise<Transaction | null> {
+        const transactionRepository = new TransactionRepository();
+        const transaction = await transactionRepository.findOne({ onlineOrderId: onlineOrderId });
+        console.log(transaction);
+        if (transaction) {
+            const transactionInstance = new Transaction(transaction);
+            await transactionInstance.populate();
+            return transactionInstance;
+        } else {
+            return null;
+        }
+    }
 }
