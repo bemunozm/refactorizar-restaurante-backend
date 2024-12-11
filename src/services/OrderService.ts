@@ -58,7 +58,6 @@ export class OrderService {
             status: status || 'Sin Pagar',
             type: type
         });
-        console.log('order', order);
         const savedOrder = await order.save();
         console.log('savedOrder', savedOrder);
 
