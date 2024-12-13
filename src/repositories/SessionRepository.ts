@@ -46,6 +46,10 @@ export class SessionRepository extends GenericRepository<SessionDocument> {
         return await sessionDocument.save();
     }
 
+    public async findSessionsBetweenDates(startDate: Date, endDate: Date): Promise<SessionDocument[]> {
+        return await this.model.find({ createdAt: { $gte: startDate, $lte: endDate } }).exec();
+    }
+
 
     public async pushGuest(sessionId: string, guestData: any): Promise<SessionDocument | null> {
         return await this.model.findByIdAndUpdate(

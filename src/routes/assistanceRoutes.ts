@@ -18,7 +18,7 @@ class AssistanceRoute {
     private initRoutes() {
         this.router.post(
             "/create",
-            AuthMiddleware.authenticate,
+            //AuthMiddleware.authenticate,
             //PermissionMiddleware.checkPermission("CREATE_ASSISTANCE"),
             [
                 body("sessionId").isMongoId().withMessage("ID de sesión inválido."),
@@ -37,7 +37,7 @@ class AssistanceRoute {
 
         this.router.put(
             "/update-status",
-            AuthMiddleware.authenticate,
+            //AuthMiddleware.authenticate,
             //PermissionMiddleware.checkPermission("UPDATE_ASSISTANCE_STATUS"),
             [
                 body("assistanceId").isMongoId().withMessage("ID de asistencia inválido."),
@@ -45,11 +45,11 @@ class AssistanceRoute {
                 ValidationMiddleware.handleInputErrors
             ],
             this.assistanceController.updateStatus.bind(this.assistanceController)
-        )
+        );
 
         this.router.post(
             "/assign",
-            AuthMiddleware.authenticate,
+           // AuthMiddleware.authenticate,
             //PermissionMiddleware.checkPermission("ASSIGN_ASSISTANCE"),
             [
                 body("assistanceId").isMongoId().withMessage("ID de asistencia inválido."),
@@ -61,7 +61,7 @@ class AssistanceRoute {
 
         this.router.post(
             "/complete",
-            AuthMiddleware.authenticate,
+            //AuthMiddleware.authenticate,
             //PermissionMiddleware.checkPermission("COMPLETE_ASSISTANCE"),
             [
                 body("assistanceId").isMongoId().withMessage("ID de asistencia inválido."),
@@ -72,7 +72,7 @@ class AssistanceRoute {
 
         this.router.post(
             "/confirm",
-            AuthMiddleware.authenticate,
+            //AuthMiddleware.authenticate,
             //PermissionMiddleware.checkPermission("CONFIRM_TRANSACTION"),
             [
                 body("assistanceId").isMongoId().withMessage("ID de asistencia inválido."),
@@ -92,18 +92,18 @@ class AssistanceRoute {
                 ValidationMiddleware.handleInputErrors
             ],
             this.assistanceController.declineTransaction.bind(this.assistanceController)
-        )
+        );
 
         this.router.get(
             "/all",
-            AuthMiddleware.authenticate,
+            //AuthMiddleware.authenticate,
             //PermissionMiddleware.checkPermission("VIEW_ASSISTANCES"),
             this.assistanceController.getAll.bind(this.assistanceController)
         );
 
         this.router.get(
             "/all/:userId",
-            AuthMiddleware.authenticate,
+            //AuthMiddleware.authenticate,
             //PermissionMiddleware.checkPermission("VIEW_ASSISTANCE"),
             [
                 param("userId").isMongoId().withMessage("ID de usuario inválido."),

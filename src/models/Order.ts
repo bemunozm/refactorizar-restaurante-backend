@@ -205,6 +205,20 @@ export class Order implements OrderInterface {
         return updated ? true : false;
     }
 
+    static async getOrdersBetweenDates(startDate: Date, endDate: Date): Promise<Order[]> {
+        const orderRepository = new OrderRepository();
+        const orders = await orderRepository.getOrdersBetweenDates(startDate, endDate);
+        if (orders) {
+            return Promise.all(orders.map(async (orderDoc) => {
+                const order = new Order({});
+                await order.populateOrder(orderDoc);
+                await order.populate();
+                return order;
+            }));
+        }
+        return null;
+    }
+
     /**
      * Popula los datos de un documento de orden.
      */

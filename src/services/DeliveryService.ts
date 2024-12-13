@@ -42,7 +42,7 @@ export class DeliveryService {
         return updatedDelivery;
     }
 
-    public async updateDeliveryStatus(deliveryId: string, status: 'Recibido' | 'En Preparación' | 'En Camino' | 'Completado') {
+    public async updateDeliveryStatus(deliveryId: string, status: 'Recibido' | 'En Preparación' | 'En Camino' | 'Completado' | 'Listo para Entregar') {
         const delivery = new Delivery({ deliveryId });
         const updatedDelivery = await delivery.updateStatus(status);
         if (updatedDelivery) {

@@ -1,8 +1,6 @@
 import ProductModel from "../schemas/ProductSchema";
-import { ProductDocument, ProductInterface } from "../interfaces/ProductInterface";
+import { ProductDocument } from "../interfaces/ProductInterface";
 import { GenericRepository } from "./GenericRepository";
-import { Ingredient } from "../models/Ingredient";
-
 export class ProductRepository extends GenericRepository<ProductDocument> {
 
     private static mongooseModel = ProductModel;
@@ -13,11 +11,6 @@ export class ProductRepository extends GenericRepository<ProductDocument> {
 
     public update(id: string, data: Partial<ProductDocument>): Promise<ProductDocument> {
 
-        const ingredients = data.ingredients.map(ingredient => ({
-
-            ingredient: ingredient.ingredient instanceof Ingredient ? ingredient.ingredient.ingredientId : ingredient.ingredient,
-            quantityRequired: ingredient.quantityRequired
-        }));
         
 
         const updateData = {
@@ -25,8 +18,8 @@ export class ProductRepository extends GenericRepository<ProductDocument> {
             price: data.price,
             about: data.about,
             category: data.category.categoryId,
-            ingredients: ingredients,
             image: data.image,
+            isAvailable: data.isAvailable,
         }
         return this.model.findByIdAndUpdate(id, updateData, { new: true }).exec();
     }
@@ -39,13 +32,17 @@ export class ProductRepository extends GenericRepository<ProductDocument> {
             price: product.price,
             about: product.about,
             category: product.category,
-            ingredients: product.ingredients,
             image: product.image,
+            isAvailable: product.isAvailable,
         });
         return await productDocument.save();
     }
 
     public async findByCategoryId(categoryId: string) {
         return await this.model.find({ category: categoryId });
+    }
+
+    public async getMostSoldProduct(startDate: Date, endDate: Date) {
+        return await this.model.find({ createdAt: { $gte: startDate, $lte: endDate } });
     }
 }

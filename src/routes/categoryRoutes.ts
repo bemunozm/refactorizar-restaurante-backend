@@ -19,8 +19,8 @@ class CategoryRoute {
     private initRoutes() {
         this.router.post(
             "/create",
-            AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("CREATE_CATEGORY"),
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("CREATE_CATEGORY"),
             upload.single("image"),
             [
                 body("name").isString().notEmpty().withMessage("El nombre de la categoría es obligatorio."),
@@ -39,8 +39,8 @@ class CategoryRoute {
 
         this.router.get(
             "/get/:id",
-            AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("VIEW_CATEGORY"),
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("VIEW_CATEGORY"),
             param("id").isMongoId().withMessage("ID de categoría inválido."),
             ValidationMiddleware.handleInputErrors,
             this.categoryController.getCategory.bind(this.categoryController)
@@ -48,22 +48,22 @@ class CategoryRoute {
 
         this.router.put(
             "/update/:id",
-            AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("UPDATE_CATEGORY"),
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("UPDATE_CATEGORY"),
             upload.single("image"),
             [
-                // param("id").isMongoId().withMessage("ID de categoría inválido."),
-                // body("name").isString().optional(),
-                // body("description").isString().optional(),
-                // ValidationMiddleware.handleInputErrors
+                param("id").isMongoId().withMessage("ID de categoría inválido."),
+                body("name").isString().optional(),
+                body("description").isString().optional(),
+                ValidationMiddleware.handleInputErrors
             ],
             this.categoryController.updateCategory.bind(this.categoryController)
         );
 
         this.router.delete(
             "/delete/:id",
-            AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("DELETE_CATEGORY"),
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("DELETE_CATEGORY"),
             param("id").isMongoId().withMessage("ID de categoría inválido."),
             ValidationMiddleware.handleInputErrors,
             this.categoryController.deleteCategory.bind(this.categoryController)

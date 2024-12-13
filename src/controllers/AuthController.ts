@@ -117,7 +117,7 @@ export class AuthController {
 
     public async validateToken(req: Request, res: Response): Promise<Response> {
         try {
-            const { token } = req.params;
+            const { token } = req.body;
             await this.authService.validateToken(token);
             return res.json({ message: "Token validado correctamente" });
         } catch (error) {

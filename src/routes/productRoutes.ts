@@ -20,17 +20,16 @@ class ProductRoute {
     private initRoutes() {
         this.router.post(
             "/create",
-            //AuthMiddleware.authenticate, // Verifica que el usuario esté autenticado
-            //PermissionMiddleware.checkPermission("CREATE_PRODUCT"), // Verifica que tenga el permiso adecuado
-            upload.single("image"), // Sube la imagen del producto
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("CREATE_PRODUCT"),
+            upload.single("image"),
             [
-                // body("name").isString().notEmpty(),
-                // body("price").isNumeric(),
-                // body("about").isString().optional(),
-                // body("categoryId").notEmpty(),
-                // body("ingredients").isArray().notEmpty()
+                body("name").isString().notEmpty(),
+                body("price").isNumeric(),
+                body("about").isString().optional(),
+                body("categoryId").notEmpty(),
             ],
-            ValidationMiddleware.handleInputErrors, // Maneja los errores de validación
+            ValidationMiddleware.handleInputErrors,
             this.productController.createProduct.bind(this.productController)
         );
 
@@ -43,22 +42,21 @@ class ProductRoute {
 
         this.router.get(
             "/get/:id",
-            AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("VIEW_PRODUCT"),
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("VIEW_PRODUCT"),
             this.productController.getProduct.bind(this.productController)
         );
 
         this.router.put(
             "/update/:id",
-            AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("UPDATE_PRODUCT"),
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("UPDATE_PRODUCT"),
             upload.single("image"),
             [
-                // body("name").isString().optional(),
-                // body("price").isNumeric().optional(),
-                // body("about").isString().optional(),
-                // body("categoryId").notEmpty().optional(),
-                // body("ingredients").isArray().optional()
+                body("name").isString().optional(),
+                body("price").isNumeric().optional(),
+                body("about").isString().optional(),
+                body("categoryId").notEmpty().optional(),
             ],
             ValidationMiddleware.handleInputErrors,
             this.productController.updateProduct.bind(this.productController)
@@ -66,16 +64,23 @@ class ProductRoute {
 
         this.router.delete(
             "/delete/:id",
-            AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("DELETE_PRODUCT"),
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("DELETE_PRODUCT"),
             this.productController.deleteProduct.bind(this.productController)
         );
 
         this.router.get(
             "/get-products-by-category/:categoryName",
-            AuthMiddleware.authenticate,
+            //AuthMiddleware.authenticate,
             //PermissionMiddleware.checkPermission("VIEW_PRODUCTS"),
             this.productController.getProductsByCategory.bind(this.productController)
+        );
+
+        this.router.get(
+            "/get-available-products",
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("VIEW_PRODUCTS"),
+            this.productController.getAvailableProducts.bind(this.productController)
         );
     }
 }

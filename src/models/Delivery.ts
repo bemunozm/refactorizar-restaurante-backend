@@ -6,7 +6,7 @@ import { User } from './User';
 export class Delivery implements DeliveryInterface {
     public deliveryId?: string;
     public orders: Order[];
-    public status: 'Recibido' | 'En Preparación' | 'En Camino' | 'Completado';
+    public status: 'Recibido' | 'En Preparación' | 'En Camino' | 'Completado' | 'Listo para Entregar';
     public customerInformation: {
         name: string;
         lastName: string;
@@ -119,7 +119,7 @@ export class Delivery implements DeliveryInterface {
         return null;
     }
 
-    public async updateStatus(status: 'Recibido' | 'En Preparación' | 'En Camino' | 'Completado'): Promise<Delivery | null> {
+    public async updateStatus(status: 'Recibido' | 'En Preparación' | 'En Camino' | 'Completado' | 'Listo para Entregar'): Promise<Delivery | null> {
         this.status = status;
         const updatedDelivery = await this.deliveryRepository.update(this.deliveryId, { status });
         if (updatedDelivery) {
