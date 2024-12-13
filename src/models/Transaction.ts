@@ -157,4 +157,18 @@ export class Transaction implements TransactionInterface {
             return null;
         }
     }
+
+    static async getTransactionsBetweenDates(startDate: Date, endDate: Date): Promise<Transaction[]> {
+        const transactionRepository = new TransactionRepository();
+        const transactions = await transactionRepository.getTransactionsBetweenDates(startDate, endDate);
+        if (transactions) {
+            return Promise.all(transactions.map(async (transaction) => {
+                const transactionInstance = new Transaction(transaction);
+                transactionInstance.transactionId = transaction.id;
+                await transactionInstance.populate();
+                return transactionInstance;
+            }));
+        }
+        return [];
+    }
 }

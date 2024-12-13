@@ -1,9 +1,5 @@
-import { Document, Types } from "mongoose";
-import { IngredientInterface } from "./IngredientInterface";
+import { Document } from "mongoose";
 import { Category } from "../models/Category";
-import { CategoryInterface } from "./CategoryInterface";
-import { Product } from "../models/Product";
-import { Ingredient } from "../models/Ingredient";
 
 export interface ProductInterface {
     productId?: string;
@@ -12,12 +8,7 @@ export interface ProductInterface {
     about: string;
     image?: string;
     category: Category;
-    ingredients: ProductIngredientInterface[];
-}
-
-export interface ProductIngredientInterface {
-    ingredient: Ingredient;
-    quantityRequired: number;
+    isAvailable: boolean;
 }
 
 export interface ProductDocument extends ProductInterface, Document {}

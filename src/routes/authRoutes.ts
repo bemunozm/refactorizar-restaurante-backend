@@ -80,7 +80,7 @@ class AuthRoute {
         this.router.post(
             "/users/create-user",
             AuthMiddleware.authenticate,
-            //PermissionMiddleware.checkPermission("CREATE_USER"),
+            PermissionMiddleware.checkPermission("CREATE_USER_ACCOUNT_ADMIN"),
             [
                 body("name").isString().notEmpty(),
                 body("lastname").isString().notEmpty(),

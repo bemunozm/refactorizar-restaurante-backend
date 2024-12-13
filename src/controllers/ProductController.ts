@@ -18,6 +18,16 @@ export class ProductController {
         }
     }
 
+    public async getAvailableProducts(req: Request, res: Response): Promise<Response> {
+        try {
+            const products = await this.productService.getAvailableProducts();
+            return res.status(200).send(products);
+        } catch (error) {
+            console.error(error);
+            return res.status(500).send('Error al obtener los productos');
+        }
+    }
+
     public async getProducts(req: Request, res: Response): Promise<Response> {
         try {
             const products = await this.productService.getProducts();

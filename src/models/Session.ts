@@ -129,6 +129,17 @@ export class Session implements SessionInterface {
         return this;
     }
 
+    public static async getSessionsBetweenDates(startDate: Date, endDate: Date): Promise<Session[]> {
+        const sessionRepository = new SessionRepository();
+        const sessions = await sessionRepository.findSessionsBetweenDates(startDate, endDate);
+        return Promise.all(sessions.map(async (sessionDoc) => {
+            const sessionInstance = new Session({});
+            await sessionInstance.populateFromDocument(sessionDoc);
+            await sessionInstance.table.findById();
+            return sessionInstance;
+        }));
+    }
+
     private populateFromDocument(sessionDoc: SessionDocument) {
         this.sessionId = sessionDoc.id.toString();
         this.table = new Table({ tableId: sessionDoc.table.toString() });

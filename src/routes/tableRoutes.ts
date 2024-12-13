@@ -18,8 +18,8 @@ class TableRoute {
     private initRoutes() {
         this.router.post(
             "/create",
-            AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("CREATE_TABLE"),
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("CREATE_TABLE"),
             [
                 body("tableNumber").isInt({ min: 1 }).withMessage("El número de mesa debe ser un número entero positivo."),
                 ValidationMiddleware.handleInputErrors
@@ -29,8 +29,8 @@ class TableRoute {
 
         this.router.get(
             "/get",
-            AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("VIEW_TABLES"),
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("VIEW_TABLES"),
             this.tableController.getTables.bind(this.tableController)
         );
 
@@ -45,8 +45,8 @@ class TableRoute {
 
         this.router.put(
             "/update/:id",
-            AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("UPDATE_TABLE"),
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("UPDATE_TABLE"),
             [
                 param("id").isMongoId().withMessage("ID de mesa inválido."),
                 body("tableNumber").optional().isInt({ min: 1 }).withMessage("El número de mesa debe ser un número entero positivo."),
@@ -57,8 +57,8 @@ class TableRoute {
 
         this.router.delete(
             "/delete/:id",
-            AuthMiddleware.authenticate,
-            PermissionMiddleware.checkPermission("DELETE_TABLE"),
+            //AuthMiddleware.authenticate,
+            //PermissionMiddleware.checkPermission("DELETE_TABLE"),
             param("id").isMongoId().withMessage("ID de mesa inválido."),
             ValidationMiddleware.handleInputErrors,
             this.tableController.deleteTable.bind(this.tableController)

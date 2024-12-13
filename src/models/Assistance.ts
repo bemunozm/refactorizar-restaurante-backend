@@ -242,6 +242,18 @@ export class Assistance implements AssistanceInterface {
         return null;
     }
 
+    static async getAssistancesBetweenDates(startDate: Date, endDate: Date): Promise<Assistance[]> {
+        const assistanceRepository = new AssistanceRepository();
+        const assistances = await assistanceRepository.getAssistancesBetweenDates(startDate, endDate);
+
+        return Promise.all(assistances.map(async (assistanceDoc) => {
+            const assistance = new Assistance({});
+            await assistance.populateAssistance(assistanceDoc);
+            await assistance.populate();
+            return assistance;
+        }));
+    }
+
     /**
      * Método privado para popular los datos de un documento de asistencia.
      */

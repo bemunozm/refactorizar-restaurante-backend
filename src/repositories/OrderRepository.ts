@@ -86,5 +86,9 @@ public async updateGuestToUserOrders(guestId: string, userId: string) {
         return await this.model.find({ session: sessionId })
     }
 
+    public async getOrdersBetweenDates(startDate: Date, endDate: Date) {
+        return await this.model.find({ createdAt: { $gte: startDate, $lte: endDate } });
+    }
+
 }
 

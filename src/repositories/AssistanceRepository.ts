@@ -138,4 +138,8 @@ export class AssistanceRepository extends GenericRepository<AssistanceDocument> 
             throw new Error('Error al buscar asistencias no completadas y sin usuario');
         }
     }
+
+    public async getAssistancesBetweenDates(startDate: Date, endDate: Date): Promise<AssistanceDocument[]> {
+        return await this.model.find({ createdAt: { $gte: startDate, $lte: endDate } });
+    }
 }

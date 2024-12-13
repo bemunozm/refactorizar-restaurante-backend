@@ -10,7 +10,9 @@ const TransactionSchema: Schema = new Schema({
     onlineOrderId: { type: String, trim: true },
     amount: { type: Number, required: true },
     status: { type: String, enum: ['CREADA', 'CONFIRMADA', 'ANULADA'], default: 'CREADA' }
-});
+},
+{ timestamps: true }
+);
 
 const TransactionModel = mongoose.models.Transaction || mongoose.model<TransactionDocument>("Transaction", TransactionSchema);
 export default TransactionModel;

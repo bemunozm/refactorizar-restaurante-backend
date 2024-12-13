@@ -5,7 +5,7 @@ import { User } from '../models/User';
 export interface DeliveryInterface {
     deliveryId?: string;
     orders: Order[] | string[];
-    status: 'Recibido' | 'En Preparación' | 'En Camino' | 'Completado';
+    status: 'Recibido' | 'En Preparación' | 'En Camino' | 'Completado' | 'Listo para Entregar';
     customerInformation: {
         name: string;
         lastName: string;

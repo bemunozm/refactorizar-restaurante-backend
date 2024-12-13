@@ -12,7 +12,6 @@ import tableRoutes from "./routes/tableRoutes";
 import productRoutes from "./routes/productRoutes";
 import categoryRoutes from "./routes/categoryRoutes";
 import orderRoutes from "./routes/orderRoutes";
-import ingredientRoutes from "./routes/ingredientRoutes";
 import path from "path";
 import roleRoutes from "./routes/roleRoutes";
 import transbankRoutes from "./routes/transbankRoutes";
@@ -21,6 +20,7 @@ import { SocketService } from "./services/SocketService";
 import assistanceRoutes from "./routes/assistanceRoutes";
 import deliveryRoutes from "./routes/deliveryRoutes";
 import discountRoutes from "./routes/discountRoutes";
+import statisticsRoutes from "./routes/statisticsRoutes";
 
 dotenv.config(); // Configuración de variables de entorno
 
@@ -70,11 +70,11 @@ class App {
     this.app.use("/api/category", categoryRoutes);
     this.app.use("/api/order", orderRoutes);
     this.app.use("/api/role", roleRoutes);
-    this.app.use("/api/ingredient", ingredientRoutes);
     this.app.use("/api/transbank", transbankRoutes);
     this.app.use("/api/assistance", assistanceRoutes);
     this.app.use("/api/delivery", deliveryRoutes);
     this.app.use("/api/discount", discountRoutes);
+    this.app.use("/api/statistics", statisticsRoutes);
     // Servir las imágenes estáticas
     this.app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
   }

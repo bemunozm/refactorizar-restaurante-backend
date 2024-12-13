@@ -195,6 +195,11 @@ export class OrderService {
                     await delivery.updateStatus('En Preparación');
                 }
 
+                //Si todos los items estan listos, actualizar el estado de la orden a "Listo"
+                if (order.items.every(item => item.status === 'Entregado')) {
+                    await delivery.updateStatus('Listo para Entregar');
+                }
+
                 //SocketService.to("onlineOrders", "onlineOrderUpdated", updatedOrder);
             }
         }

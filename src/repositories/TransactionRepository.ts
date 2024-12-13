@@ -37,4 +37,8 @@ export class TransactionRepository extends GenericRepository<TransactionDocument
     public async updateStatus(transactionId: string, status: string) {
         return await TransactionModel.updateOne({ _id: transactionId }, { $set: { status } });
     }
+
+    public async getTransactionsBetweenDates(startDate: Date, endDate: Date) {
+        return await this.model.find({ createdAt: { $gte: startDate, $lte: endDate } });
+    }
 }

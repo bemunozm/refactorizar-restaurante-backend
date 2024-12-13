@@ -118,7 +118,7 @@ export class AuthService {
 
         if (assignedRoles.includes(null)) throw new Error("Uno o más roles no encontrados");
 
-        const user = new User({ name, lastname, email, confirmed: false, roles: assignedRoles });
+        const user = new User({ name, lastname, email, confirmed: true, roles: assignedRoles });
 
 
         const userExists = await user.doesThatExist();
@@ -143,10 +143,9 @@ export class AuthService {
         const tokenData = await tokenInstance.findByToken();
         if (!tokenData) throw new Error("Token no encontrado");
 
-        const user = new User({ userId: tokenData.user.toString() });
+        const user = new User({ userId: tokenData.user.userId });
         await user.findById();
-        user.confirmed = true;
-        await user.save();
+        await user.update({ confirmed: true });
 
         await tokenInstance.deleteToken();
 
@@ -193,7 +192,7 @@ export class AuthService {
         await user.findById();
         user.password = password;
         await user.hashPassword();
-        await user.save();
+        await user.update({ password: user.password });
 
         await tokenInstance.deleteToken();
 
@@ -242,11 +241,11 @@ export class AuthService {
         const tokenData = await tokenInstance.findByToken();
         if (!tokenData) throw new Error("Token no encontrado");
 
-        const user = new User({ userId: tokenData.user.toString() });
+        const user = new User({ userId: tokenData.user.userId });
         await user.findById();
         user.password = password;
         await user.hashPassword();
-        await user.save();
+        await user.update({ password: user.password });
 
         await tokenInstance.deleteToken();
 

@@ -3,7 +3,7 @@ import { DeliveryDocument } from '../interfaces/DeliveryInterface';
 
 const DeliverySchema = new Schema<DeliveryDocument>({
     orders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Order', required: true }],
-    status: { type: String, enum: ['Recibido', 'En Preparación', 'En Camino', 'Completado'], default: 'Recibido' },
+    status: { type: String, enum: ['Recibido', 'En Preparación', 'En Camino', 'Completado', 'Listo para Entregar'], default: 'Recibido' },
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     customerInformation: {
         name: { type: String, required: true },
