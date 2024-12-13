@@ -136,6 +136,9 @@ const defaultRoles = [
       'VIEW_TABLE',
       'UPDATE_TABLE',
       'DELETE_TABLE',
+      'CREATE_ASSISTANCE',
+      'COMPLETE_ASSISTANCE',
+      'VIEW_ASSISTANCES',
     ],
   },
   {
