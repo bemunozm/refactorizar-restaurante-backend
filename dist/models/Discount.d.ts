@@ -1,0 +1,32 @@
+import { DiscountConditions, DiscountInterface } from '../interfaces/DiscountInterface';
+import { Order } from './Order';
+export declare class Discount implements DiscountInterface {
+    discountId: string;
+    name: string;
+    description?: string;
+    type: "percentage" | "fixed" | "conditional";
+    value: number;
+    conditions?: DiscountConditions;
+    maxUses?: number;
+    usedCount?: number;
+    startDate?: string;
+    endDate?: string;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+    private discountRepository;
+    constructor(discount: Partial<DiscountInterface>);
+    private sanitizeConditions;
+    save(): Promise<Discount>;
+    findById(): Promise<Discount | null>;
+    update(updateData: Partial<DiscountInterface>): Promise<Discount | null>;
+    delete(): Promise<void>;
+    static getAll(): Promise<Discount[]>;
+    activate(): Promise<void>;
+    deactivate(): Promise<void>;
+    findByPromotionCode(): Promise<Discount | null>;
+    validateConditions(orders: Order[]): boolean;
+    private populateFromDocument;
+    private populateConditions;
+    populate(): Promise<void>;
+}
