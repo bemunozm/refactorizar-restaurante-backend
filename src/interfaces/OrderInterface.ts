@@ -14,7 +14,7 @@ export interface OrderInterface {
   user?: User ;
   type: 'Retiro en Tienda' | 'Delivery' | 'Presencial';
   items: OrderItemInterface[];
-  status: 'Sin Pagar' | 'Pagado' | 'Pendiente';
+  status: 'Sin Pagar' | 'Pagado' | 'Pendiente' | 'Cancelado' | 'Entregado' | 'Listo' | 'En Preparacion';
   createdAt?: Date;
   updatedAt?: Date;
 }

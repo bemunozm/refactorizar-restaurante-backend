@@ -86,8 +86,10 @@ export class TransbankService {
                 const allOrdersPaid = sessionOrders.every((order) => order.status === 'Pagado');
                 console.log(allOrdersPaid);
                 const session = new Session({ sessionId: transaction.session.sessionId });
+                const table = new Table({ tableId: transaction.session.table.tableId });
                 if (allOrdersPaid) {
                     await session.updateStatus('Finalizada');
+                    await table.update({ status: 'Disponible' });
                 } else {
                     await session.updateStatus('Activa');
                 }

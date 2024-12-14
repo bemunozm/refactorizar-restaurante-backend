@@ -1,6 +1,8 @@
 import { Category } from "../models/Category";
 import { CategoryInterface } from "../interfaces/CategoryInterface";
 import { Product } from "../models/Product";
+import fs from 'fs';
+import path from 'path';
 
 export class CategoryService {
     public async createCategory(data: CategoryInterface, file?: Express.Multer.File) {
@@ -23,20 +25,40 @@ export class CategoryService {
     }
 
     public async updateCategory(id: string, updateData: CategoryInterface, file?: Express.Multer.File) {
+        const category = new Category({ categoryId: id });
+        const existingCategory = await category.findById();
+
+        if (existingCategory && existingCategory.image) {
+            const imagePath = path.join(__dirname, '..', '..', existingCategory.image);
+            fs.unlink(imagePath, (err) => {
+                if (err) {
+                    console.error('Error al eliminar la imagen anterior:', err);
+                }
+            });
+        }
+
         if (file) {
             updateData.image = `/uploads/images/${file.filename}`;
         }
 
-        const category = new Category({ categoryId: id });
         return await category.update(updateData);
     }
 
     public async deleteCategory(id: string) {
         const category = new Category({ categoryId: id });
+        const existingCategory = await category.findById();
 
-        await category.findById();
-        if (!category.categoryId) {
+        if (!existingCategory) {
             throw new Error('Categoría no encontrada');
+        }
+
+        if (existingCategory.image) {
+            const imagePath = path.join(__dirname, '..', '..', existingCategory.image);
+            fs.unlink(imagePath, (err) => {
+                if (err) {
+                    console.error('Error al eliminar la imagen:', err);
+                }
+            });
         }
 
         const products = await Product.findByCategoryId(category.categoryId);

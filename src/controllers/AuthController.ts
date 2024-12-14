@@ -26,7 +26,6 @@ export class AuthController {
 
     public async login(req: Request, res: Response): Promise<Response> {
         try {
-            
             const token = await this.authService.login(req.body);
             return res.json(token);
         } catch (error) {

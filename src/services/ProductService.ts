@@ -1,4 +1,6 @@
 // ProductService.ts
+import fs from 'fs';
+import path from 'path'; // Importar path para manejar rutas de archivos
 import { Product } from "../models/Product";
 import { Category } from "../models/Category";
 import { ProductInterface } from "../interfaces/ProductInterface";
@@ -38,19 +40,46 @@ export class ProductService {
     }
 
     public async updateProduct(id: string, updateData: ProductInterface, file?: Express.Multer.File) {
+        const product = new Product({ productId: id });
+        const existingProduct = await product.findById();
+
+        if (existingProduct && existingProduct.image) {
+            // Eliminar la imagen anterior si existe
+            const imagePath = path.join(__dirname, '..', '..', existingProduct.image); // Asegúrate de que la ruta sea correcta
+            fs.unlink(imagePath, (err) => {
+                if (err) {
+                    console.error('Error al eliminar la imagen anterior:', err);
+                }
+            });
+        }
+
         if (updateData.price) updateData.price = +updateData.price;
         if (file) updateData.image = `/uploads/images/${file.filename}`;
-        console.log(updateData);
-        const categoryInstance = updateData.category ? new Category({ categoryId: updateData.category.toString()}) : undefined;
+
+        const categoryInstance = updateData.category ? new Category({ categoryId: updateData.category.toString() }) : undefined;
         if (categoryInstance) await categoryInstance.findById();
 
-       
-        const product = new Product({ productId: id });
         return await product.update({ ...updateData, category: categoryInstance });
     }
 
     public async deleteProduct(id: string) {
         const product = new Product({ productId: id });
+        const existingProduct = await product.findById();
+
+        if (!existingProduct) {
+            throw new Error('Producto no encontrado');
+        }
+
+        // Eliminar la imagen asociada al producto
+        if (existingProduct.image) {
+            const imagePath = path.join(__dirname, '..', '..', existingProduct.image); // Asegúrate de que la ruta sea correcta
+            fs.unlink(imagePath, (err) => {
+                if (err) {
+                    console.error('Error al eliminar la imagen:', err);
+                }
+            });
+        }
+
         return await product.delete();
     }
 

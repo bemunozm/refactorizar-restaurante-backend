@@ -59,7 +59,7 @@ class AuthMiddleware {
                 await user.findById();
                 if (user) {
                     req.user = user;
-                    req.role = "Usuario";
+                    req.role = user.roles[0].name;
                     next();
                 } else {
                     res.status(401).json({ error: "Usuario No Encontrado" });
