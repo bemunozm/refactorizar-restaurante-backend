@@ -66,7 +66,6 @@ export class AuthService {
 
     public async login(data: any) {
         const { email, password, guestId, sessionId } = data;
-
         const user = new User({ email, password });
 
         const userExists = await user.doesThatExist();
@@ -99,7 +98,9 @@ export class AuthService {
             role: 'Usuario'
         });
 
-        return { token: jwtToken, session: sessionId ? new Session({ sessionId }) : undefined };
+        const role = user.roles[0].name
+
+        return { token: jwtToken, session: sessionId ? new Session({ sessionId }) : undefined, role: role };
     }
 
     // Métodos adicionales para confirmación y otros procesos
@@ -158,6 +159,10 @@ export class AuthService {
         const userExists = await user.doesThatExist();
         if (!userExists) throw new Error("Usuario no encontrado");
 
+        const userTokenExists = new Token({ user: user.userId });
+        const userTokenExistsData = await userTokenExists.findByUserId();
+        if (userTokenExistsData) await userTokenExists.deleteToken();
+
         const token = new Token({ token: generateToken(), user });
         await token.save();
 
@@ -204,6 +209,10 @@ export class AuthService {
         const userExists = await user.doesThatExist();
         if (!userExists) throw new Error("Usuario no encontrado");
 
+        const userTokenExists = new Token({ user: user.userId });
+        const userTokenExistsData = await userTokenExists.findByUserId();
+        if (userTokenExistsData) await userTokenExists.deleteToken();
+
         const token = new Token({ token: generateToken(), user });
         await token.save();
 
@@ -217,7 +226,11 @@ export class AuthService {
     public async forgotPassword(email: string) {
         const user = new User({ email });
         const userExists = await user.doesThatExist();
-        if (!userExists) throw new Error("Usuario no encontrado");
+        if (!userExists) throw new Error("Usuario no encontrado");  
+
+        const userTokenExists = new Token({ user: user.userId });
+        const userTokenExistsData = await userTokenExists.findByUserId();
+        if (userTokenExistsData) await userTokenExists.deleteToken();
 
         const token = new Token({ token: generateToken(), user });
         await token.save();

@@ -14,7 +14,7 @@ export class Order implements OrderInterface {
     public user?: User;
     public type: 'Retiro en Tienda' | 'Delivery' | 'Presencial';
     public items: OrderItemInterface[];
-    public status: 'Sin Pagar' | 'Pagado' | 'Pendiente';
+    public status: 'Sin Pagar' | 'Pagado' | 'Pendiente' | 'Cancelado' | 'Entregado' | 'Listo' | 'En Preparacion';
     public createdAt?: Date;
     public updatedAt?: Date;
     private orderRepository: OrderRepository;
@@ -154,7 +154,7 @@ export class Order implements OrderInterface {
         return null;
     }
 
-    public async updateOrderStatus(status: 'Sin Pagar' | 'Pagado' | 'Pendiente'): Promise<Order | null> {
+    public async updateOrderStatus(status: 'Sin Pagar' | 'Pagado' | 'Pendiente' | 'Cancelado' | 'Entregado' | 'Listo' | 'En Preparacion'): Promise<Order | null> {
         const updatedOrder = await this.orderRepository.update(this.orderId, { status });
         console.log('Updated Order', updatedOrder);
         if (updatedOrder) {

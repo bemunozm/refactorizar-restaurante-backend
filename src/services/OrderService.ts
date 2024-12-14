@@ -224,12 +224,12 @@ export class OrderService {
         return orders;
     }
 
-    public async updateOrderStatus(orderId: string, status: 'Sin Pagar' | 'Pagado' | 'Pendiente') {
+    public async updateOrderStatus(orderId: string, status: 'Sin Pagar' | 'Pagado' | 'Pendiente' | 'Cancelado' | 'Entregado' | 'Listo' | 'En Preparacion') {
         const order = new Order({ orderId });
         const updatedOrder = await order.updateOrderStatus(status);
 
         // Emitir la actualización a la sesión, cocina, camareros y administradores
-        SocketService.to(updatedOrder.session.sessionId, "orderUpdated", updatedOrder);
+        order.session && SocketService.to(updatedOrder.session.sessionId, "orderUpdated", updatedOrder);
         SocketService.to("kitchen", "kitchenOrderUpdated", updatedOrder);
         SocketService.to("waiters", "waiterOrderUpdated", updatedOrder);
         SocketService.to("admin", "adminOrderUpdated", updatedOrder);

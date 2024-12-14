@@ -76,6 +76,11 @@ class OrderRoute {
             ],
             this.orderController.updateOrderItemStatus.bind(this.orderController)
         );
+
+        this.router.put(
+            "/update-status/:orderId",
+            this.orderController.updateOrderStatus.bind(this.orderController)
+        );
     }
 }
 
