@@ -90,12 +90,17 @@ export class TransbankService {
                 if (allOrdersPaid) {
                     await session.updateStatus('Finalizada');
                     await table.update({ status: 'Disponible' });
+                    SocketService.to(transaction.session.sessionId, 'assistanceApproved', sessionOrders);
                 } else {
                     await session.updateStatus('Activa');
+                    SocketService.to(transaction.session.sessionId, 'assistanceApproved', sessionOrders);
                 }
             }
         }
         await transaction.updateStatus('CONFIRMADA');
+        SocketService.to("waiter", "assistanceApproved", {
+            tableId: transaction.session.table.tableId,
+        });
 
         return response;
     }
