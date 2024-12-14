@@ -76,7 +76,13 @@ class App {
     this.app.use("/api/discount", discountRoutes);
     this.app.use("/api/statistics", statisticsRoutes);
     // Servir las imágenes estáticas
-    this.app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+    
+    this.app.use('/uploads', (req, res, next) => {
+      res.setHeader('ngrok-skip-browser-warning', 'true');
+      next();
+    }, express.static(path.join(__dirname, '../uploads')));
+    
   }
 
   private initSockets() {
