@@ -76,4 +76,15 @@ export class AuthEmail {
         console.log('Mensaje enviado', info.messageId);
     };
     
+    static sendPromotionalEmail = async (user: { email: string; subject: string; message: string }) => {
+        const info = await transporter.sendMail({
+            from: 'Restaurante <admin@restaurante.com>',
+            to: user.email,
+            subject: user.subject,
+            text: user.message,
+            html: `<p>${user.message}</p>`
+        });
+
+        console.log('Mensaje enviado', info.messageId);
+    };
 }
