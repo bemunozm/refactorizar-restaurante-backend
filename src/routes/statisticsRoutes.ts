@@ -44,6 +44,12 @@ class StatisticsRoute {
             PermissionMiddleware.checkPermission("VIEW_STATISTICS"),
             this.statisticsController.getOrderStats.bind(this.statisticsController)
         );
+        this.router.post(
+            "/table-stats",
+            AuthMiddleware.authenticate,
+            PermissionMiddleware.checkPermission("VIEW_STATISTICS"),
+            this.statisticsController.getTableStats.bind(this.statisticsController)
+        );
     }
 }
 

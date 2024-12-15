@@ -58,4 +58,14 @@ export class StatisticsController {
             return res.status(500).json({ error: "Error al obtener las estadísticas de pedidos" });
         }
     }
+
+    public async getTableStats(req: Request, res: Response): Promise<Response> {
+        try {
+            const { startDate, endDate } = req.body;
+            const tableStats = await this.statisticsService.getTableStats({ startDate, endDate });
+            return res.status(200).json(tableStats);
+        } catch (error) {
+            return res.status(500).json({ error: "Error al obtener las estadísticas de las mesas" });
+        }
+    }
 }
