@@ -1,18 +1,24 @@
 import { AuthEmail } from "../emails/AuthEmail";
+import { MasiveEmail } from "../emails/MasiveEmail";
+import { Discount } from "../models/Discount";
 
 export class EmailService {
-    public async sendPromotionalEmail(email: string, subject: string, message: string): Promise<void> {
-        const user = {
-            email,
-            name: "Usuario", // Puedes personalizar el nombre si es necesario
-            token: "token_placeholder" // Si necesitas un token, puedes generarlo aquí
-        };
+    public async sendPromotionalEmail(emails: string[], subject: string, message: string, templateType: string, discount: string): Promise<void> {
+        
 
-        // Aquí puedes personalizar el correo según el asunto y el mensaje
-        await AuthEmail.sendPromotionalEmail({
-            email: user.email,
-            subject,
-            message
-        });
+        if (templateType === 'masive') {
+            for (const email of emails) {
+                const discountInstance = new Discount({discountId: discount});
+                const discountFound = await discountInstance.findById();
+                await MasiveEmail.sendPromotionalEmail({
+                    email,
+                    subject,
+                    message,
+                    discount: discountFound
+                });
+            }
+        } else {
+            console.log('No se ha seleccionado un template valido');
+        }
     }
 } 
