@@ -86,10 +86,12 @@ export class TransbankService {
                 const allOrdersPaid = sessionOrders.every((order) => order.status === 'Pagado');
                 console.log(allOrdersPaid);
                 const session = new Session({ sessionId: transaction.session.sessionId });
-                const table = new Table({ tableId: transaction.session.table.tableId });
+                const table = transaction.session.table ? new Table({ tableId: transaction.session.table.tableId }) : null;
                 if (allOrdersPaid) {
                     await session.updateStatus('Finalizada');
-                    await table.update({ status: 'Disponible' });
+                    if (table) {
+                        await table.update({ status: 'Disponible' });
+                    }
                     SocketService.to(transaction.session.sessionId, 'assistanceApproved', sessionOrders);
                 } else {
                     await session.updateStatus('Activa');
@@ -99,7 +101,7 @@ export class TransbankService {
         }
         await transaction.updateStatus('CONFIRMADA');
         SocketService.to("waiter", "assistanceApproved", {
-            tableId: transaction.session.table.tableId,
+            tableId: transaction.session.table ? transaction.session.table.tableId : null,
         });
 
         return response;
@@ -124,7 +126,7 @@ export class TransbankService {
         const transaction = await new Transaction({ token }).findByToken();
         if (!transaction || !transaction.session) throw new Error('Transacción o sesión no encontrada');
 
-        const tableId = transaction.session.table.tableId;
+        const tableId = transaction.session.table ? transaction.session.table.tableId : null;
         // Emitir el token de Transbank a los meseros
         SocketService.to("waiter", "paymentTokenNotification", {
             token,
