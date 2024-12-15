@@ -448,98 +448,84 @@ export class StatisticsService {
         const sessions = await Session.getSessionsBetweenDates(startDate, endDate);
         const orders = await Order.getOrdersBetweenDates(startDate, endDate);
         const paidOrders = orders.filter(order => order.status === 'Pagado');
-
-        const tableStats = {
-            totalTables: tables.length,
-            occupiedTables: 0,
-            availableTables: 0,
-            totalSessions: 0,
-            totalEarnings: 0,
-            averageSessionDuration: 0,
-            sessionDurations: [],
-            popularTables: new Map<string, { table: Table; sessionCount: number }>(),
-            bestHours: new Map<string, { count: number; totalSales: number }>(),
+    
+        const tableMap = new Map<string, { table: Table, sales: { [key: string]: { quantity: number, totalSales: number } } }>();
+        const popularTables = new Map<string, { table: Table, sessionCount: number }>();
+        const sessionDurations: number[] = [];
+        const timePeriods = {
+            'Desayuno': { start: 8, end: 12 },
+            'Almuerzo': { start: 13, end: 17 },
+            'Merienda': { start: 17, end: 20 },
+            'Cena': { start: 21, end: 24 }
         };
-
+    
         // Inicializar el mapa de sesiones por mesa
         tables.forEach(table => {
-            tableStats.popularTables.set(table.tableId || '', { table: table, sessionCount: 0 });
+            tableMap.set(table.tableId || '', {
+                table,
+                sales: {
+                    'Desayuno': { quantity: 0, totalSales: 0 },
+                    'Almuerzo': { quantity: 0, totalSales: 0 },
+                    'Merienda': { quantity: 0, totalSales: 0 },
+                    'Cena': { quantity: 0, totalSales: 0 }
+                }
+            });
+            popularTables.set(table.tableId || '', { table, sessionCount: 0 });
         });
-
+    
         // Calcular estadísticas
         sessions.forEach(session => {
-            tableStats.totalSessions += 1;
             const tableId = session.table.tableId;
-
-            // Contar mesas ocupadas
-            if (session.status === 'Activa' || session.status === 'Pagando') {
-                tableStats.occupiedTables += 1;
-            }
-            const popularTable = tableStats.popularTables.get(tableId);
+            const popularTable = popularTables.get(tableId);
             if (popularTable) {
                 popularTable.sessionCount += 1; // Incrementar el conteo de sesiones
             }
-
+    
             // Calcular duración de la sesión
             if (session.createdAt && session.updatedAt) {
                 const createdAt = new Date(session.createdAt);
                 const updatedAt = new Date(session.updatedAt);
                 const duration = Math.round((updatedAt.getTime() - createdAt.getTime()) / 60000); // Duración en minutos
-                tableStats.sessionDurations.push(duration);
-
-                // Calcular las mejores horas
-                const hour = createdAt.getHours();
-                const key = `${tableId}-${hour}`;
-                const orderTotal = paidOrders
-                    .filter(order => order.table && order.table.tableId === tableId)
-                    .reduce((total, order) => {
-                        const orderTotal = order.items.reduce((itemTotal, item) => {
-                            return itemTotal + (item.product?.price || 0) * (item.quantity || 0);
-                        }, 0);
-                        return total + orderTotal;
-                    }, 0);
-                    
-                if (!tableStats.bestHours.has(key)) {
-                    
-                    tableStats.bestHours.set(key, { count: 0, totalSales: 0 });
-                }
-                const hourStats = tableStats.bestHours.get(key)!;
-                hourStats.count += 1;
-                hourStats.totalSales += orderTotal;
+                sessionDurations.push(duration);
             }
         });
-
-
-        // Calcular mesas disponibles
-        tableStats.availableTables = tableStats.totalTables - tableStats.occupiedTables;
-
-        // Calcular duración promedio de las sesiones
-        if (tableStats.sessionDurations.length > 0) {
-            const totalDuration = tableStats.sessionDurations.reduce((acc, curr) => acc + curr, 0);
-            tableStats.averageSessionDuration = Math.round(totalDuration / tableStats.sessionDurations.length); // Promedio en minutos
+    
+        // Calcular las mejores horas por mesa
+        for (const order of paidOrders) {
+            if (order.status === 'Pagado') {
+                const hour = order.createdAt.getHours();
+                const orderTotal = order.items.reduce((total, item) => total + (item.product.price * item.quantity), 0);
+                const tableId = order.table?.tableId;
+    
+                if (tableId) {
+                    const tableData = tableMap.get(tableId);
+                    if (tableData) {
+                        // Actualizar ventas por tiempo
+                        Object.entries(timePeriods).forEach(([period, { start, end }]) => {
+                            if (hour >= start && hour < end) {
+                                tableData.sales[period].quantity += 1;
+                                tableData.sales[period].totalSales += orderTotal;
+                            }
+                        });
+                    }
+                }
+            }
         }
-
+    
+        // Convertir el mapa a un arreglo
+        const salesByTime = Array.from(tableMap.values()).map(({ table, sales }) => ({
+            ...table,
+            sales
+        }));
+    
         // Convertir las mesas más populares a un formato más útil
-        const popularTablesArray = Array.from(tableStats.popularTables.values())
+        const popularTablesArray = Array.from(popularTables.values())
             .sort((a, b) => b.sessionCount - a.sessionCount); // Ordenar por número de sesiones
-
-        // Convertir las mejores horas a un formato más útil
-        const bestHoursArray = Array.from(tableStats.bestHours.entries())
-            .map(([key, stats]) => {
-                const [tableId, hour] = key.split('-');
-                return {
-                    tableId,
-                    hour: parseInt(hour),
-                    count: stats.count,
-                    totalSales: stats.totalSales,
-                    averageSales: stats.totalSales / stats.count // Calcular promedio de ventas por hora
-                };
-            });
-
+    
         return {
-            ...tableStats,
             popularTables: popularTablesArray, // Devolver las mesas más populares con el objeto completo
-            bestHours: bestHoursArray // Devolver las mejores horas
+            salesByTime, // Devolver las ventas por tiempo
+            sessionDurations // Devolver las duraciones de las sesiones
         };
     }
 }
