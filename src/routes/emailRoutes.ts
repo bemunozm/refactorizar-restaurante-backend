@@ -17,9 +17,10 @@ class EmailRoute {
         this.router.post(
             "/send-promotional-email",
             [
-                body("email").isEmail(),
                 body("subject").isString().notEmpty(),
                 body("message").isString().notEmpty(),
+                body("templateType").isString().notEmpty(),
+                body("discount").isString().notEmpty(),
                 ValidationMiddleware.handleInputErrors
             ],
             this.emailController.sendPromotionalEmail.bind(this.emailController)

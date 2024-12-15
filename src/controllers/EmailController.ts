@@ -11,8 +11,8 @@ export class EmailController {
 
     public async sendPromotionalEmail(req: Request, res: Response): Promise<Response> {
         try {
-            const { email, subject, message } = req.body;
-            await this.emailService.sendPromotionalEmail(email, subject, message);
+            const { emails, subject, message, templateType, discount } = req.body;
+            await this.emailService.sendPromotionalEmail(emails, subject, message, templateType, discount);
             return res.status(200).json({ message: "Correo promocional enviado correctamente." });
         } catch (error) {
             return res.status(500).json({ error: error.message });
