@@ -14,7 +14,7 @@ export class MasiveEmail {
 
 
         const info = await transporter.sendMail({
-            from: 'Auto-Restro <admin@autorestro.com>',
+            from: 'Auto-Restro <noreply@marketing.autorestro.live>',
             to: email,
             subject: subject,
             html: `

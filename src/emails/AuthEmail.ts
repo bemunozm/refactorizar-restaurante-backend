@@ -9,7 +9,7 @@ type EmailType = {
 export class AuthEmail {
     static sendConfirmationEmail = async ( user : EmailType ) => {
         const info = await transporter.sendMail({
-            from: 'Auto Restro <admin@autorestro.live>',
+            from: 'Auto Restro <noreply@marketing.autorestro.live>',
             to: user.email,
             subject: 'Auto Restro - Confirma tu cuenta',
             text: 'Auto Restro - Confirma tu cuenta',
@@ -213,7 +213,7 @@ a[x-apple-data-detectors],
 
     static sendPasswordResetToken = async ( user : EmailType ) => {
         const info = await transporter.sendMail({
-            from: 'Auto-Restro <admin@autorestro.com>',
+            from: 'Auto-Restro <noreply@marketing.autorestro.live>',
             to: user.email,
             subject: 'Auto-Restro - Reestablece tu password',
             text: 'Auto-Restro - Reestablece tu password',
@@ -427,7 +427,7 @@ a[x-apple-data-detectors],
 
     static sendWelcomeEmail = async (user: EmailType) => {
         const info = await transporter.sendMail({
-            from: 'Auto-Restro <admin@autorestro.com>',
+            from: 'Auto-Restro <noreply@marketing.autorestro.live>',
             to: user.email,
             subject: '¡Bienvenido al equipo de Auto-Restro!',
             text: 'Bienvenido al equipo de Auto-Restro',
