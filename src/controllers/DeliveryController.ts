@@ -10,8 +10,8 @@ export class DeliveryController {
 
     public async create(req: Request, res: Response): Promise<Response> {
         try {
-            const { orders, address, customerInformation } = req.body;
-            const delivery = await this.deliveryService.createDelivery({ orders, address, customerInformation });
+            const { orders, address, customerInformation, user } = req.body;
+            const delivery = await this.deliveryService.createDelivery({ orders, address, customerInformation, user });
             return res.status(201).json(delivery);
         } catch (error) {
             console.error(`Error al crear la entrega: ${error}`);

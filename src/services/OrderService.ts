@@ -11,7 +11,6 @@ import { Delivery } from "../models/Delivery";
 export class OrderService {
     public async orderProducts(orderData) {
         const { items, sessionId, guestId, userId, type, status } = orderData;
-        
         // Crear instancia de sesión usando el sessionId si está presente
         let sessionInstance;
         if (sessionId) {
@@ -191,14 +190,16 @@ export class OrderService {
                     SocketService.to("admin", "adminOrderUpdated", updatedOrder);
                 }
 
-                if (delivery.status !== 'Completado' && delivery.status !== 'En Camino') {
+                if (delivery.status !== 'Completado' && delivery.status !== 'En Camino' && updatedOrder.items) {
                     await delivery.updateStatus('En Preparación');
                 }
 
                 //Si todos los items estan listos, actualizar el estado de la orden a "Listo"
-                if (order.items.every(item => item.status === 'Entregado')) {
+                if (order.items.every(item => item.status === 'Entregado' && order.type === 'Retiro en Tienda')) {
                     await delivery.updateStatus('Listo para Entregar');
                 }
+
+                
 
                 //SocketService.to("onlineOrders", "onlineOrderUpdated", updatedOrder);
             }
