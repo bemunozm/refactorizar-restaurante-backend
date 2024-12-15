@@ -81,12 +81,13 @@ export class TransbankService {
             }
 
             // Manejar la lógica de sesión solo si `session` está presente
-            if (transaction.session.sessionId) {
+            if (transaction.session) {
                 const sessionOrders = await Order.findBySessionId(transaction.session.sessionId);
                 const allOrdersPaid = sessionOrders.every((order) => order.status === 'Pagado');
                 console.log(allOrdersPaid);
                 const session = new Session({ sessionId: transaction.session.sessionId });
                 const table = transaction.session.table ? new Table({ tableId: transaction.session.table.tableId }) : null;
+
                 if (allOrdersPaid) {
                     await session.updateStatus('Finalizada');
                     if (table) {
@@ -97,11 +98,14 @@ export class TransbankService {
                     await session.updateStatus('Activa');
                     SocketService.to(transaction.session.sessionId, 'assistanceApproved', sessionOrders);
                 }
+            } else {
+                // Manejar el caso donde no hay sesión
+                console.log('No hay sesión asociada a la transacción.');
             }
         }
         await transaction.updateStatus('CONFIRMADA');
         SocketService.to("waiter", "assistanceApproved", {
-            tableId: transaction.session.table ? transaction.session.table.tableId : null,
+            tableId: transaction.session && transaction.session.table ? transaction.session.table.tableId : null,
         });
 
         return response;
