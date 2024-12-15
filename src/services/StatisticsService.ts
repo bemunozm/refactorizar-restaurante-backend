@@ -310,6 +310,7 @@ export class StatisticsService {
         if (!orders) {
             throw new Error("No se encontraron ordenes entre las fechas");
         }
+        const paidOrders = orders.filter(order => order.status === 'Pagado');
 
         const salesByDayMap = new Map<string, { total: number, count: number }>();
         const salesByDateMap = new Map<string, number>(); // Para almacenar el total vendido por fecha
@@ -359,7 +360,7 @@ export class StatisticsService {
             totalSales
         }));
 
-        return { salesByDay, salesByDate }; // Devolver ambas estructuras
+        return { salesByDay, salesByDate, paidOrders }; // Devolver ambas estructuras
     }
 
     public async getOrderStats({ startDate, endDate }: { startDate: Date, endDate: Date }) {
@@ -528,5 +529,6 @@ export class StatisticsService {
             sessionDurations // Devolver las duraciones de las sesiones
         };
     }
+    
 }
 

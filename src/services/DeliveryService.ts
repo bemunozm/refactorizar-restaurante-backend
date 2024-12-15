@@ -3,11 +3,12 @@ import { Order } from '../models/Order';
 import { SocketService } from './SocketService';
 
 export class DeliveryService {
-    public async createDelivery(deliveryData: { orders: string[], address: { lat: number, lng: number }, customerInformation: Delivery['customerInformation'] }) {
+    public async createDelivery(deliveryData: { orders: string[], address: { lat: number, lng: number }, customerInformation: Delivery['customerInformation'], user: string }) {
         const delivery = new Delivery({
             orders: deliveryData.orders.map(orderId => new Order({ orderId })),
             address: deliveryData.address ? deliveryData.address : null,
             customerInformation: deliveryData.customerInformation,
+            user: deliveryData.user? deliveryData.user : null,
             status: 'Recibido'
         });
         await delivery.save();

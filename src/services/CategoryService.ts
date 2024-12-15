@@ -52,6 +52,12 @@ export class CategoryService {
             throw new Error('Categoría no encontrada');
         }
 
+        
+        const products = await Product.findByCategoryId(category.categoryId);
+        if (products.length > 0) {
+            throw new Error('No se puede eliminar la categoría porque tiene productos asociados');
+        }
+        
         if (existingCategory.image) {
             const imagePath = path.join(__dirname, '..', '..', existingCategory.image);
             fs.unlink(imagePath, (err) => {
@@ -60,12 +66,6 @@ export class CategoryService {
                 }
             });
         }
-
-        const products = await Product.findByCategoryId(category.categoryId);
-        if (products.length > 0) {
-            throw new Error('No se puede eliminar la categoría porque tiene productos asociados');
-        }
-
         return await category.delete();
     }
 }
