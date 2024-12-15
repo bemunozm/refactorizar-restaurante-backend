@@ -21,6 +21,7 @@ import assistanceRoutes from "./routes/assistanceRoutes";
 import deliveryRoutes from "./routes/deliveryRoutes";
 import discountRoutes from "./routes/discountRoutes";
 import statisticsRoutes from "./routes/statisticsRoutes";
+import emailRoutes from "./routes/emailRoutes"; // Importa las rutas de correo
 
 dotenv.config(); // Configuración de variables de entorno
 
@@ -75,6 +76,7 @@ class App {
     this.app.use("/api/delivery", deliveryRoutes);
     this.app.use("/api/discount", discountRoutes);
     this.app.use("/api/statistics", statisticsRoutes);
+    this.app.use("/api/email", emailRoutes); // Agrega la ruta de correo
     // Servir las imágenes estáticas
 
     
