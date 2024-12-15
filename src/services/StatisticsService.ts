@@ -146,8 +146,7 @@ export class StatisticsService {
 
         // Preparar datos para el gráfico de ventas por tiempo
         const salesByTime = Array.from(productMap.values()).map(({ product, sales }) => ({
-            productId: product.productId,
-            productName: product.name,
+            ...product,
             sales
         }));
 
@@ -180,10 +179,10 @@ export class StatisticsService {
         for (const order of orders) {
             if (order.status === 'Pagado') {
                 const date = order.createdAt.toISOString().split('T')[0]; // Obtener la fecha en formato ISO
-                const hour = order.createdAt.getHours();
+                const hour = order.createdAt.getHours(); // Solo la hora, sin minutos
                 const dayOfWeek = order.createdAt.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
                 const orderTotal = order.items.reduce((total, item) => total + (item.product.price * item.quantity), 0);
-
+                
                 const key = `${date}-${hour}`; // Crear una clave única para cada combinación de fecha y hora
 
                 // Actualizar estadísticas generales
@@ -207,9 +206,9 @@ export class StatisticsService {
 
         // Convertir el objeto a un arreglo y calcular el promedio de ventas para el período completo
         const bestHours = Object.entries(hoursStats).map(([key, stats]) => {
-            const [date, hour] = key.split('-');
+            const [year, month, day, hour] = key.split('-');
             return {
-                date,
+                date: `${year}-${month}-${day}`,
                 hour: parseInt(hour),
                 count: stats.count,
                 totalSales: stats.totalSales,
@@ -219,6 +218,8 @@ export class StatisticsService {
 
         // Convertir las estadísticas semanales a un formato más útil
         const bestHoursByDay = Object.entries(weeklyStats).map(([day, hours]) => {
+            console.log('day', day);
+            console.log('hours', hours);
             return {
                 day: parseInt(day), // Convertir el día de la semana a número
                 hours: Object.entries(hours).map(([hour, stats]) => ({
@@ -401,24 +402,6 @@ export class StatisticsService {
             const orderTotal = order.items.reduce((total, item) => total + (item.product.price * item.quantity), 0);
             deliveryStats.totalEarnings += orderTotal;
 
-            if (assistanceRecords) {
-                for (const assistance of assistanceRecords) {
-                    if (assistance.type === 'Pago con Efectivo' && assistance.transactionToken) {
-                        const transaction = confirmedTransactions.find(t => t.token === assistance.transactionToken && t.status === 'CONFIRMADA');
-                        if (transaction) {
-                            deliveryStats.paymentMethods[0].count += 1;
-                            deliveryStats.paymentMethods[0].totalEarnings += transaction.amount;
-                        }
-                    } else if (assistance.type === 'Pago con Tarjeta' && assistance.transactionToken) {
-                        const transaction = confirmedTransactions.find(t => t.token === assistance.transactionToken && t.status === 'CONFIRMADA');
-                        if (transaction) {
-                            deliveryStats.paymentMethods[1].count += 1;
-                            deliveryStats.paymentMethods[1].totalEarnings += transaction.amount;
-                        }
-                    }
-                }
-            }
-
             // Contar pedidos por tipo de envío
             if (order.type === 'Retiro en Tienda') {
                 shippingStats['Retiro en Tienda'].count += 1;
@@ -432,12 +415,131 @@ export class StatisticsService {
             }
         }
 
-        deliveryStats.paymentMethods[2].count = confirmedTransactions.filter(t => t.status === 'CONFIRMADA').length - deliveryStats.paymentMethods[0].count - deliveryStats.paymentMethods[1].count;
+        // Contar métodos de pago
+        if (assistanceRecords) {
+            for (const assistance of assistanceRecords) {
+                const transaction = confirmedTransactions.find(t => t.token === assistance.transactionToken && t.status === 'CONFIRMADA');
+                if (transaction) {
+                    if (assistance.type === 'Pago con Efectivo') {
+                        deliveryStats.paymentMethods[0].count += 1;
+                        deliveryStats.paymentMethods[0].totalEarnings += transaction.amount;
+                    } else if (assistance.type === 'Pago con Tarjeta') {
+                        deliveryStats.paymentMethods[1].count += 1;
+                        deliveryStats.paymentMethods[1].totalEarnings += transaction.amount;
+                    } else {
+                        console.log('No se encontró el tipo de pago');
+                    }
+                }
+            }
+        }
+
+        // Calcular el conteo de Webpay
+        deliveryStats.paymentMethods[2].count = deliveryStats.totalOrders - deliveryStats.paymentMethods[0].count - deliveryStats.paymentMethods[1].count;
         deliveryStats.paymentMethods[2].totalEarnings = deliveryStats.totalEarnings - deliveryStats.paymentMethods[0].totalEarnings - deliveryStats.paymentMethods[1].totalEarnings;
 
         return {
             deliveryStats,
             shippingStats // Devolver también las estadísticas de envío
+        };
+    }
+
+    public async getTableStats({ startDate, endDate }: { startDate: Date, endDate: Date }) {
+        const tables = await Table.getAll();
+        const sessions = await Session.getSessionsBetweenDates(startDate, endDate);
+        const orders = await Order.getOrdersBetweenDates(startDate, endDate);
+        const paidOrders = orders.filter(order => order.status === 'Pagado');
+
+        const tableStats = {
+            totalTables: tables.length,
+            occupiedTables: 0,
+            availableTables: 0,
+            totalSessions: 0,
+            totalEarnings: 0,
+            averageSessionDuration: 0,
+            sessionDurations: [],
+            popularTables: new Map<string, { table: Table; sessionCount: number }>(),
+            bestHours: new Map<string, { count: number; totalSales: number }>(),
+        };
+
+        // Inicializar el mapa de sesiones por mesa
+        tables.forEach(table => {
+            tableStats.popularTables.set(table.tableId || '', { table: table, sessionCount: 0 });
+        });
+
+        // Calcular estadísticas
+        sessions.forEach(session => {
+            tableStats.totalSessions += 1;
+            const tableId = session.table.tableId;
+
+            // Contar mesas ocupadas
+            if (session.status === 'Activa' || session.status === 'Pagando') {
+                tableStats.occupiedTables += 1;
+            }
+            const popularTable = tableStats.popularTables.get(tableId);
+            if (popularTable) {
+                popularTable.sessionCount += 1; // Incrementar el conteo de sesiones
+            }
+
+            // Calcular duración de la sesión
+            if (session.createdAt && session.updatedAt) {
+                const createdAt = new Date(session.createdAt);
+                const updatedAt = new Date(session.updatedAt);
+                const duration = Math.round((updatedAt.getTime() - createdAt.getTime()) / 60000); // Duración en minutos
+                tableStats.sessionDurations.push(duration);
+
+                // Calcular las mejores horas
+                const hour = createdAt.getHours();
+                const key = `${tableId}-${hour}`;
+                const orderTotal = paidOrders
+                    .filter(order => order.table && order.table.tableId === tableId)
+                    .reduce((total, order) => {
+                        const orderTotal = order.items.reduce((itemTotal, item) => {
+                            return itemTotal + (item.product?.price || 0) * (item.quantity || 0);
+                        }, 0);
+                        return total + orderTotal;
+                    }, 0);
+                    
+                if (!tableStats.bestHours.has(key)) {
+                    
+                    tableStats.bestHours.set(key, { count: 0, totalSales: 0 });
+                }
+                const hourStats = tableStats.bestHours.get(key)!;
+                hourStats.count += 1;
+                hourStats.totalSales += orderTotal;
+            }
+        });
+
+
+        // Calcular mesas disponibles
+        tableStats.availableTables = tableStats.totalTables - tableStats.occupiedTables;
+
+        // Calcular duración promedio de las sesiones
+        if (tableStats.sessionDurations.length > 0) {
+            const totalDuration = tableStats.sessionDurations.reduce((acc, curr) => acc + curr, 0);
+            tableStats.averageSessionDuration = Math.round(totalDuration / tableStats.sessionDurations.length); // Promedio en minutos
+        }
+
+        // Convertir las mesas más populares a un formato más útil
+        const popularTablesArray = Array.from(tableStats.popularTables.values())
+            .sort((a, b) => b.sessionCount - a.sessionCount); // Ordenar por número de sesiones
+
+        // Convertir las mejores horas a un formato más útil
+        const bestHoursArray = Array.from(tableStats.bestHours.entries())
+            .map(([key, stats]) => {
+                const [tableId, hour] = key.split('-');
+                return {
+                    tableId,
+                    hour: parseInt(hour),
+                    count: stats.count,
+                    totalSales: stats.totalSales,
+                    averageSales: stats.totalSales / stats.count // Calcular promedio de ventas por hora
+                };
+            });
+
+        return {
+            ...tableStats,
+            popularTables: popularTablesArray, // Devolver las mesas más populares con el objeto completo
+            bestHours: bestHoursArray // Devolver las mejores horas
         };
     }
 }
