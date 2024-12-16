@@ -59,11 +59,10 @@ npm install
 Crea un archivo .env en la raíz del proyecto con las siguientes variables:
 
 ```.env
-PORT=3000
-MONGO_URI=mongodb+srv://usuario:password@cluster.mongodb.net/dbname
-JWT_SECRET=tu_clave_secreta
-TRANSACTION_API_KEY=tu_api_key_transbank
-MAPS_API_KEY=tu_api_key_google_maps
+VITE_API_URL=http://localhost:4000/api
+VITE_API_IMAGE_URL=http://localhost:4000
+VITE_FRONTEND_URL=http://localhost:5173
+VITE_MAPS_API_KEY=tu_api_key_google_maps
 ```
 ### 4. Ejecuta el servidor localmente
 Inicia el servidor en modo desarrollo:
