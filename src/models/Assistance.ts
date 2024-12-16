@@ -219,7 +219,7 @@ export class Assistance implements AssistanceInterface {
     public async updateStatus(status: 'Pendiente' | 'En Progreso' | 'Completado'): Promise<Assistance | null> {
         this.status = status;
         const updatedAssistance = await this.assistanceRepository.update(this.assistanceId, { status });
-
+        
         if (updatedAssistance) {
             await this.populateAssistance(updatedAssistance);
             await this.populate();

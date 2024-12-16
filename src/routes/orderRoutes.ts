@@ -62,16 +62,12 @@ class OrderRoute {
             this.orderController.getOrdersForKitchen.bind(this.orderController)
         );
 
-        this.router.put(
+        this.router.post(
             "/update-item-status/:itemId",
             //AuthMiddleware.authenticate,
             //PermissionMiddleware.checkPermission("UPDATE_ORDER_ITEM_STATUS"),
             [
-                param("itemId").isMongoId().withMessage("ID de ítem inválido."),
-                body("status")
-                    .isString()
-                    .isIn(["Pendiente", "En Preparacion", "Listo", "Cancelado", "Entregado"])
-                    .withMessage("Estado de ítem inválido."),
+               
                 ValidationMiddleware.handleInputErrors
             ],
             this.orderController.updateOrderItemStatus.bind(this.orderController)
