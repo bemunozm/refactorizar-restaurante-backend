@@ -5,6 +5,7 @@ import { Session } from '../models/Session';
 import { OrderInterface } from '../interfaces/OrderInterface';
 import { SocketService } from './SocketService';
 import { Table } from '../models/Table';
+import { Socket } from 'socket.io';
 
 export class TransbankService {
     public async createTransaction(data: { amount: number; sessionId?: string; onlineOrderId?: string; orders?: string[] }) {
@@ -94,9 +95,11 @@ export class TransbankService {
                         await table.update({ status: 'Disponible' });
                     }
                     SocketService.to(transaction.session.sessionId, 'assistanceApproved', sessionOrders);
+                    SocketService.to(transaction.session.sessionId, 'orderUpdated', sessionOrders);
                 } else {
                     await session.updateStatus('Activa');
                     SocketService.to(transaction.session.sessionId, 'assistanceApproved', sessionOrders);
+                    SocketService.to(transaction.session.sessionId, 'orderUpdated', sessionOrders);
                 }
             } else {
                 // Manejar el caso donde no hay sesión
@@ -119,7 +122,9 @@ export class TransbankService {
         if (status === 'ANULADA' && transaction.session) {
             const session = new Session({ sessionId: transaction.session.sessionId });
             await session.updateStatus('Activa');
+            SocketService.to(transaction.session.sessionId, 'assistanceApproved', session);
         }
+
 
         await transaction.updateStatus(status);
 
