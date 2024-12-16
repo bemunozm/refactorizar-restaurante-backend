@@ -87,15 +87,10 @@ Asegúrate de que tu código esté en un repositorio público o privado en GitHu
 
 * En la sección de variables de entorno, agrega las siguientes claves desde tu archivo .env:
 ```.env
-PORT
-
-MONGO_URI
-
-JWT_SECRET
-
-TRANSACTION_API_KEY
-
-MAPS_API_KEY
+VITE_API_URL
+VITE_API_IMAGE_URL
+VITE_FRONTEND_URL
+VITE_MAPS_API_KEY
 ```
 
 Nota: DigitalOcean gestiona las variables de entorno de manera segura.
