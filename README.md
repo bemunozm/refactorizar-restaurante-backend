@@ -1,4 +1,4 @@
-# 🚀 **Backend de Gestión Integral de Restaurantes** 🥂
+# 🚀 **API RESTFUL AUTO RESTRO** 🥂
 
 Este es el backend de un sistema diseñado para optimizar la gestión de restaurantes, manejando pedidos, mesas, pagos y delivery. El proyecto está desplegado utilizando **DigitalOcean App Platform**.
 
@@ -10,8 +10,6 @@ Este es el backend de un sistema diseñado para optimizar la gestión de restaur
 - [Requisitos Previos](#-requisitos-previos)
 - [Instalación Local](#-instalación-local)
 - [Despliegue en DigitalOcean App Platform](#-despliegue-en-digitalocean-app-platform)
-- [Contribución](#-contribución)
-- [Licencia](#-licencia)
 
 ---
 
