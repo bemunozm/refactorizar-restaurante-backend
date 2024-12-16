@@ -48,8 +48,7 @@ class TransbankRoute {
             //AuthMiddleware.authenticate,
             //PermissionMiddleware.checkPermission("UPDATE_TRANSACTION_STATUS"),
             [
-                body("transactionId").isMongoId().withMessage("ID de transacción inválido."),
-                body("status").isString().withMessage("El estado es obligatorio."),
+                
                 ValidationMiddleware.handleInputErrors
             ],
             this.transbankController.updateTransactionStatus.bind(this.transbankController)
