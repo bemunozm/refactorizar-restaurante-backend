@@ -99,16 +99,17 @@ export class OrderService {
 
             // Obtener detalles del ítem (producto, cantidad, comentario)
             const itemDetails = updatedOrder.items.find(item => item.itemId === itemId);
-
             // Validación: Si el ítem está asociado a una asistencia, gestionamos la transición de estado
             if (assistance) {
                 // Caso 1: Si el ítem estaba "Listo" y ahora pasa a otro estado, lo eliminamos de la waiterRoom
+                console.log('status', status);
                 if (status !== 'Listo') {
                     // Emitir evento para eliminar la asistencia de la waiterRoom
                     if (status !== 'Entregado') {
                         await assistance.updateStatus('Pendiente');
                     } else {
-                        await assistance.updateStatus('Completado');
+                        const completeAsistance = await assistance.updateStatus('Completado');
+                        console.log('completeAsistance', completeAsistance);
                     }
                     SocketService.to('waiterRoom', 'removeAssistance', assistance);
                 }
@@ -138,6 +139,7 @@ export class OrderService {
 
                 // Emitir evento de actualización de la asistencia
                 SocketService.to('waiterRoom', 'assistanceUpdated', assistance);
+                SocketService.to("kitchen", "kitchenOrderUpdated", order);
             }
 
             // Caso 2: Si el ítem pasa a "Listo", crear una nueva asistencia o actualizar la existente

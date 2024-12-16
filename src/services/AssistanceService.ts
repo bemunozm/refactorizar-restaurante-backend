@@ -136,7 +136,7 @@ export class AssistanceService {
         await assistance.confirmTransaction(transactionToken);
 
         // Emitir eventos de asistencia y sesión
-        SocketService.to('waiterRoom', 'removeAssistance', assistance);
+        SocketService.to('waiterRoom', 'assistanceUpdated', assistance);
         SocketService.to(session.sessionId, 'assistanceApproved', sessionOrders);
 
         return assistance;
@@ -162,7 +162,7 @@ export class AssistanceService {
 
 
         // Emitir eventos de asistencia
-        SocketService.to('waiterRoom', 'removeAssistance', assistance);
+        SocketService.to('waiterRoom', 'assistanceUpdated', assistance);
         SocketService.to(session.sessionId, 'assistanceDeclined', transaction.orders);
 
         return assistance;
